@@ -18,11 +18,9 @@
     (new (#j.WebSocket# (+ "ws://" window.location.host "/ws"))))
 
 (def-top-level-form.ps register-on-message
-  ;; TODO: Decode unicode
   (setf ws-socket.onmessage
         (lambda (e)
-          (setf (chain document (get-element-by-id "js-code") value) e.data)
-          (eval.call window e.data))))
+          (setf (chain document (get-element-by-id "js-code") value) e.data))))
 
 #|
 ;; Currently not used but remained for reference to send info to server.

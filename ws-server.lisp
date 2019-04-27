@@ -29,16 +29,11 @@
         (format t "~&Server connected")
         (start-connection server)))))
 
-(defun send-from-server (ps-code)
-  (let ((message (handler-case
-                     (compile-ps-string ps-code)
-                   (condition (e)
-                     (declare (ignore e))
-                     "alert(\"Compile Error!!\");"))))
-    (dolist (server (copy-list *server-instance-list*))
-      (case (ready-state server)
-        (:open (send server message))
-        (:closed (print "Connecction closed")
-                 (setf *server-instance-list* (remove server *server-instance-list*)))
-        ;; otherwise do nothing
-        ))))
+(defun send-from-server (message)
+  (dolist (server (copy-list *server-instance-list*))
+    (case (ready-state server)
+      (:open (send server message))
+      (:closed (print "Connecction closed")
+               (setf *server-instance-list* (remove server *server-instance-list*)))
+      ;; otherwise do nothing
+      )))
