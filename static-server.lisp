@@ -16,9 +16,6 @@
                     (:script :src "js/client.js" nil)
                     (:script :src "js/main.js" nil))
                    (:body
-                    (:div (:textarea :id "ps-code"
-                                     :cols 80 :rows 10 "(alert \"Hello world!!\")"))
-                    (:button :type "button" :onclick "send_ps_code()" "Send Parenscript code")
                     (:div (:textarea :id "js-code"
                                      :cols 80 :rows 10 :readonly t :disabled t nil))))))))
 

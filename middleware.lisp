@@ -3,6 +3,8 @@
   (:export :make-hot-load-middleware)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :*ws-app*)
+  (:import-from :proto-cl-client-side-rendering/client
+                :output-client-js)
   (:import-from :proto-cl-client-side-rendering/defines
                 :create-js-file-if-required))
 (in-package :proto-cl-client-side-rendering/middleware)
@@ -11,6 +13,8 @@
   (lambda (app)
     (lambda (env)
       (create-js-file-if-required main-js-path)
+      ;; temp
+      (output-client-js (merge-pathnames "client.js" main-js-path))
       (let ((uri (getf env :request-uri)))
         (if (string= uri string-url)
             (funcall *ws-app* env)

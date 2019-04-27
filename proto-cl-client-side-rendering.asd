@@ -22,6 +22,7 @@
                :cl-markup
                :cl-ppcre
                :parenscript
+               :ps-experiment
                :proto-cl-client-side-rendering/main
                :proto-cl-client-side-rendering/playground)
   :description "A sample of Client side rendering in Common Lisp"
