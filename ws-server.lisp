@@ -38,6 +38,7 @@
     (dolist (server (copy-list *server-instance-list*))
       (case (ready-state server)
         (:open (send server message))
-        (:closed (setf *server-instance-list* (remove server *server-instance-list*)))
+        (:closed (print "Connecction closed")
+                 (setf *server-instance-list* (remove server *server-instance-list*)))
         ;; otherwise do nothing
         ))))
