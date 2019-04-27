@@ -17,6 +17,7 @@
   :license "MIT"
   :depends-on (:websocket-driver-server
                :websocket-driver-client
+               :bordeaux-threads
                :clack
                :ningle
                :cl-markup
