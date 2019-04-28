@@ -3,7 +3,7 @@
   (:export :make-hot-load-middleware)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :*ws-app*)
-  (:import-from :proto-cl-client-side-rendering/client
+  (:import-from :proto-cl-client-side-rendering/client/core
                 :output-client-js))
 (in-package :proto-cl-client-side-rendering/middleware)
 

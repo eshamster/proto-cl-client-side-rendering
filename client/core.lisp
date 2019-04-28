@@ -1,4 +1,4 @@
-(defpackage proto-cl-client-side-rendering/client
+(defpackage proto-cl-client-side-rendering/client/core
   (:use :cl)
   (:export :output-client-js)
   (:import-from :proto-cl-client-side-rendering/protocol
@@ -16,7 +16,7 @@
                 :def-top-level-form.ps
                 :enable-ps-experiment-syntax
                 :with-use-ps-pack))
-(in-package :proto-cl-client-side-rendering/client)
+(in-package :proto-cl-client-side-rendering/client/core)
 
 (enable-ps-experiment-syntax)
 
