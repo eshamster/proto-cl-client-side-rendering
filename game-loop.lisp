@@ -2,6 +2,9 @@
   (:use :cl)
   (:export :start-game-loop
            :stop-game-loop)
+  (:import-from :proto-cl-client-side-rendering/protocol
+                :send-frame-start
+                :send-frame-end)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server)
   (:import-from :bordeaux-threads
@@ -17,7 +20,10 @@
   (incf *current-frame*))
 
 (defun send-draw ()
-  (send-from-server (format nil "current-frame: ~D" *current-frame*)))
+  (let ((frame *current-frame*)
+        (index-in-frame 0))
+    (send-frame-start frame (incf index-in-frame))
+    (send-frame-end frame (incf index-in-frame))))
 
 (defun start-game-loop ()
   (stop-game-loop)
