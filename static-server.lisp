@@ -20,8 +20,7 @@
             (html5 (:head
                     (:title "A sample of WebSocket on Common Lisp")
                     (dolist (src (make-src-list-for-script-tag "js/"))
-                      (markup (:script :src src nil)))
-                    (:script :src "js/main.js" nil))
+                      (markup (:script :src src nil))))
                    (:body
                     (:div (:textarea :id "js-code"
                                      :cols 80 :rows 10 :readonly t :disabled t nil))

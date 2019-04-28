@@ -2,8 +2,6 @@
   (:use :cl)
   (:export :*ws-app*
            :send-from-server)
-  (:import-from :proto-cl-client-side-rendering/compiler
-                :compile-ps-string)
   (:import-from :websocket-driver
                 :make-server
                 :on

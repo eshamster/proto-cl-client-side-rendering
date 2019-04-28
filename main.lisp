@@ -4,16 +4,10 @@
         :proto-cl-client-side-rendering/game-loop
         :proto-cl-client-side-rendering/ws-server
         :proto-cl-client-side-rendering/server
-        :proto-cl-client-side-rendering/middleware
-        :proto-cl-client-side-rendering/defines)
+        :proto-cl-client-side-rendering/middleware)
   (:export :start
            :stop
 
            :send-from-server
 
-           :make-hot-load-middleware
-
-           :defun.hl
-           :defvar.hl
-           :defonce.hl
-           :with-hot-loads))
+           :make-hot-load-middleware))
