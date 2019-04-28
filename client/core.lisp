@@ -1,6 +1,9 @@
 (defpackage proto-cl-client-side-rendering/client/core
   (:use :cl)
   (:export :output-client-js)
+  ;; temporal
+  (:import-from :proto-cl-client-side-rendering/client/graphics
+                :make-wired-circle)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name
                 :name-to-code)
@@ -148,4 +151,6 @@
 
 (def-top-level-form.ps :run-start-2d-game
   (start-2d-game :screen-width 800 :screen-height 600
-                 :rendered-dom (document.query-selector "#renderer")))
+                 :rendered-dom (document.query-selector "#renderer")
+                 :init-function (lambda (scene)
+                                  (scene.add (make-wired-circle :r 200 :color #xffffff)))))
