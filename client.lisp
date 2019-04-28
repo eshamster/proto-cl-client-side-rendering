@@ -78,3 +78,72 @@
                              :no (parse-int (cadr body))))
                  (t (ps:create :message message)))))
     (ps:create :kind kind-code :data data)))
+
+;; --- graphic --- ;;
+
+;; The followings are based on cl-web-2d-game
+
+(defun.ps init-camera (offset-x offset-y width height)
+  (let* ((x offset-x)
+         (y offset-y)
+         (z 1000)
+         (camera (new (#j.THREE.OrthographicCamera#
+                       (* x -1) (- width x)
+                       (- height y) (* y -1)
+                       0 (* z 2)))))
+    (camera.position.set 0 0 z)
+    camera))
+
+(defun.ps initialize-screen-size (rendered-dom renderer screen-width screen-height resize-to-screen-p)
+  (setf *resize-to-screen-p* resize-to-screen-p)
+  (labels ((calc-scale ()
+             (min (/ window.inner-width screen-width)
+                  (/ (- window.inner-height *window-height-adjust*) screen-height)))
+           (set-position-by-size (width height)
+             (setf rendered-dom.style.position "absolute"
+                   rendered-dom.style.left (+ (/ (- window.inner-width width) 2) "px")
+                   rendered-dom.style.top (+ (/ (- window.inner-height height) 2) "px")))
+           (set-size (width height)
+             (renderer.set-size width height)
+             (set-position-by-size width height))
+           (resize ()
+             (let ((scale (if *resize-to-screen-p* (calc-scale) 1)))
+               (set-size (* screen-width scale)
+                         (* screen-height scale)))))
+    (resize)
+    (let ((resize-timer nil))
+      (window.add-event-listener
+       "resize" (lambda (e)
+                  (declare (ignore e))
+                  (when resize-timer
+                    (clear-timeout resize-timer))
+                  (setf resize-timer
+                        (set-timeout (lambda () (resize))
+                                     100)))))))
+
+(defun.ps start-2d-game (&key screen-width screen-height
+                              rendered-dom
+                              (resize-to-screen-p nil)
+                              (init-function (lambda (scene) nil))
+                              (update-function (lambda () nil)))
+  (let* ((scene (new (#j.THREE.Scene#)))
+         (renderer (new #j.THREE.WebGLRenderer#))
+         (camera (init-camera 0 0 screen-width screen-height)))
+    (initialize-screen-size rendered-dom renderer
+                            screen-width screen-height
+                            resize-to-screen-p)
+    (chain rendered-dom
+           (append-child renderer.dom-element))
+    (let ((light (new (#j.THREE.DirectionalLight# 0xffffff))))
+      (light.position.set 0 0.7 0.7)
+      (scene.add light))
+    (funcall init-function scene)
+    (labels ((render-loop ()
+               (request-animation-frame render-loop)
+               (renderer.render scene camera)
+               (funcall update-function)))
+      (render-loop))))
+
+(def-top-level-form.ps :run-start-2d-game
+  (start-2d-game :screen-width 800 :screen-height 600
+                 :rendered-dom (document.query-selector "#renderer")))

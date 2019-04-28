@@ -19,6 +19,7 @@
                :websocket-driver-client
                :bordeaux-threads
                :clack
+               :dexador
                :ningle
                :cl-markup
                :cl-ppcre

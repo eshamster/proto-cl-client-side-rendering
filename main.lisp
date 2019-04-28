@@ -1,6 +1,7 @@
 (defpackage proto-cl-client-side-rendering/main
   (:nicknames :proto-cl-client-side-rendering)
   (:use :cl
+        :proto-cl-client-side-rendering/game-loop
         :proto-cl-client-side-rendering/ws-server
         :proto-cl-client-side-rendering/server
         :proto-cl-client-side-rendering/middleware

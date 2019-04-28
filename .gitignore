@@ -5,7 +5,5 @@
 *.lx64fsl
 *.x86f
 *~
-*.tem
 .#*
-js/main.js
-js/client.js
+js/
