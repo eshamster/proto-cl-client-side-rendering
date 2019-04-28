@@ -69,15 +69,17 @@
 
 (defun.ps receiving-to-json (message)
   (let* ((split-message (message.split " "))
-         (kind-code (parse-int (car split-message)))
+         (kind-code (parse-int (nth 0 split-message)))
          (kind (code-to-name kind-code))
-         (body (cdr split-message))
+         (frame (parse-int (nth 1 split-message)))
+         (index-in-frame (parse-int (nth 2 split-message)))
+         (body (nthcdr 3 split-message))
          (data (case kind
-                 ((:frame-start :frame-end)
-                  (ps:create :frame (parse-int (car body))
-                             :no (parse-int (cadr body))))
-                 (t (ps:create :message message)))))
-    (ps:create :kind kind-code :data data)))
+                 (t (ps:create :message body)))))
+    (ps:create :kind kind-code
+               :frame frame
+               :no index-in-frame
+               :data data)))
 
 ;; --- graphic --- ;;
 
