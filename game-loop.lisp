@@ -28,6 +28,10 @@
                       :x 200 :y (+ 300 (* 100 (sin (/ *current-frame* 2))))
                       :depth 0
                       :r 40 :color #xff0000)
+    (send-draw-circle frame (incf index-in-frame) 1
+                      :x 500 :y (+ 300 (* 100 (sin (/ *current-frame* 3))))
+                      :depth 0 :fill-p t
+                      :r 40 :color #x00ffff)
     (send-frame-end frame (incf index-in-frame))))
 
 (defun start-game-loop ()

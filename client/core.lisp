@@ -3,11 +3,13 @@
   (:export :output-client-js)
   ;; temporal
   (:import-from :proto-cl-client-side-rendering/client/graphics
+                :make-solid-circle
                 :make-wired-circle)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name
                 :name-to-code
-                :draw-code-p)
+                :draw-code-p
+                :number-to-bool)
   (:import-from :parenscript
                 :chain
                 :new
@@ -87,6 +89,9 @@
   (eq (gethash :kind parsed-message)
       (name-to-code kind)))
 
+(defun.ps my-parse-bool (str)
+  (number-to-bool (parse-int str)))
+
 (defun.ps+ array-pair-to-hash (key-array value-array value-processor-array)
   (let ((result (make-hash-table)))
     (loop
@@ -107,10 +112,12 @@
                  (:draw-circle
                   (array-pair-to-hash
                    (list :id :x :y :depth
-                         :r :color)
+                         :color :fill-p
+                         :r)
                    body
                    (list #'parse-int #'parse-float #'parse-float #'parse-float
-                         #'parse-float #'parse-int)))
+                         #'parse-int #'my-parse-bool
+                         #'parse-float)))
                  (t (ps:create :message body)))))
     (ps:create :kind kind-code
                :frame frame
@@ -195,8 +202,11 @@
               (data (gethash :data command)))
           (ecase kind
             (:draw-circle
-             (let ((mesh (make-wired-circle :r (gethash :r data)
-                                            :color (gethash :color data))))
+             (let ((mesh (if (gethash :fill-p data)
+                             (make-solid-circle :r (gethash :r data)
+                                                :color (gethash :color data))
+                             (make-wired-circle :r (gethash :r data)
+                                                :color (gethash :color data)))))
                (mesh.position.set (gethash :x data)
                                   (gethash :y data)
                                   (gethash :depth data))

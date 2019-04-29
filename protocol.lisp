@@ -5,7 +5,9 @@
            :send-frame-start
            :send-frame-end
            :send-draw-circle
-           :draw-code-p)
+           :draw-code-p
+           :bool-to-number
+           :number-to-bool)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server)
   (:import-from :ps-experiment
@@ -46,6 +48,12 @@
             (eq name target-name))
           '(:draw-rect :draw-circle))))
 
+(defun.ps+ bool-to-number (bool)
+  (if bool 1 0))
+
+(defun.ps+ number-to-bool (number)
+  (if (= number 1) t nil))
+
 ;; --- sender --- ;;
 
 (defun send-frame-start (frame index-in-frame)
@@ -58,8 +66,10 @@
                             (name-to-code :frame-end)
                             frame index-in-frame)))
 
-(defun send-draw-circle (frame index-in-frame id &key x y depth r color)
-  (send-from-server (format nil "~D ~D ~D ~D ~F ~F ~F ~F ~D"
+(defun send-draw-circle (frame index-in-frame id &key x y depth color fill-p r)
+  (send-from-server (format nil "~D ~D ~D ~D ~F ~F ~F ~D ~D ~F"
                             (name-to-code :draw-circle)
                             frame index-in-frame
-                            id x y depth r color)))
+                            id x y depth color
+                            (bool-to-number fill-p)
+                            r)))
