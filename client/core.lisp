@@ -6,7 +6,8 @@
                 :make-wired-circle)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name
-                :name-to-code)
+                :name-to-code
+                :draw-code-p)
   (:import-from :parenscript
                 :chain
                 :new
@@ -49,7 +50,20 @@
 
 ;; --- process message --- ;;
 
-(defvar.ps+ *frame-json-cache* (list))
+(defvar.ps+ *frame-json-cache* (list)) ; per frame
+
+(defvar.ps+ *draw-command-buffer* (list)) ; per frame
+(defvar.ps+ *draw-command-queue* (list))  ; frames
+
+(defun.ps push-draw-command-to-buffer (parsed-message)
+  (*draw-command-buffer*.push parsed-message))
+
+(defun.ps queue-draw-commands-in-buffer ()
+  (*draw-command-queue*.unshift *draw-command-buffer*)
+  (setf *draw-command-buffer* (list)))
+
+(defun.ps dequeue-draw-commands ()
+  (*draw-command-queue*.pop))
 
 (defun.ps push-message-to-cach (parsed-message)
   (*frame-json-cache*.push parsed-message))
@@ -63,12 +77,24 @@
         (dolist (parsed *frame-json-cache*)
           (incf value ((@ #j.JSON# stringify) parsed))
           (incf value "
-")))
+")
+          (when (draw-code-p (gethash :kind parsed))
+            (push-draw-command-to-buffer parsed))))
+      (queue-draw-commands-in-buffer)
       (setf *frame-json-cache* (list)))))
 
 (defun.ps+ target-kind-p (kind parsed-message)
   (eq (gethash :kind parsed-message)
       (name-to-code kind)))
+
+(defun.ps+ array-pair-to-hash (key-array value-array value-processor-array)
+  (let ((result (make-hash-table)))
+    (loop
+       :for key :in key-array
+       :for value :in value-array
+       :for value-processor :in value-processor-array
+       :do (setf (gethash key result) (funcall value-processor value)))
+    result))
 
 (defun.ps receiving-to-json (message)
   (let* ((split-message (message.split " "))
@@ -78,6 +104,13 @@
          (index-in-frame (parse-int (nth 2 split-message)))
          (body (nthcdr 3 split-message))
          (data (case kind
+                 (:draw-circle
+                  (array-pair-to-hash
+                   (list :id :x :y :depth
+                         :r :color)
+                   body
+                   (list #'parse-int #'parse-float #'parse-float #'parse-float
+                         #'parse-float #'parse-int)))
                  (t (ps:create :message body)))))
     (ps:create :kind kind-code
                :frame frame
@@ -130,7 +163,7 @@
                               rendered-dom
                               (resize-to-screen-p nil)
                               (init-function (lambda (scene) nil))
-                              (update-function (lambda () nil)))
+                              (update-function (lambda (scene) nil)))
   (let* ((scene (new (#j.THREE.Scene#)))
          (renderer (new #j.THREE.WebGLRenderer#))
          (camera (init-camera 0 0 screen-width screen-height)))
@@ -146,11 +179,30 @@
     (labels ((render-loop ()
                (request-animation-frame render-loop)
                (renderer.render scene camera)
-               (funcall update-function)))
+               (funcall update-function scene)))
       (render-loop))))
+
+(defun.ps clear-scene (scene)
+  (loop :while (> scene.children.length 0)
+     :do (scene.remove (@ scene children 0))))
+
+(defun.ps update-draw (scene)
+  (let ((draw-commands (dequeue-draw-commands)))
+    (when draw-commands
+      (clear-scene scene)
+      (dolist (command draw-commands)
+        (let ((kind (code-to-name (gethash :kind command)))
+              (data (gethash :data command)))
+          (ecase kind
+            (:draw-circle
+             (let ((mesh (make-wired-circle :r (gethash :r data)
+                                            :color (gethash :color data))))
+               (mesh.position.set (gethash :x data)
+                                  (gethash :y data)
+                                  (gethash :depth data))
+               (scene.add mesh)))))))))
 
 (def-top-level-form.ps :run-start-2d-game
   (start-2d-game :screen-width 800 :screen-height 600
                  :rendered-dom (document.query-selector "#renderer")
-                 :init-function (lambda (scene)
-                                  (scene.add (make-wired-circle :r 200 :color #xffffff)))))
+                 :update-function #'update-draw))

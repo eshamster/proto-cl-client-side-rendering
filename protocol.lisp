@@ -3,7 +3,9 @@
   (:export :code-to-name
            :name-to-code
            :send-frame-start
-           :send-frame-end)
+           :send-frame-end
+           :send-draw-circle
+           :draw-code-p)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server)
   (:import-from :ps-experiment
@@ -36,6 +38,14 @@
 (defun.ps+ name-to-code (name)
   (gethash name *name-to-code-table*))
 
+;; --- utils --- ;;
+
+(defun.ps+ draw-code-p (code)
+  (let ((target-name (code-to-name code)))
+    (some (lambda (name)
+            (eq name target-name))
+          '(:draw-rect :draw-circle))))
+
 ;; --- sender --- ;;
 
 (defun send-frame-start (frame index-in-frame)
@@ -47,3 +57,9 @@
   (send-from-server (format nil "~D ~D ~D"
                             (name-to-code :frame-end)
                             frame index-in-frame)))
+
+(defun send-draw-circle (frame index-in-frame id &key x y depth r color)
+  (send-from-server (format nil "~D ~D ~D ~D ~F ~F ~F ~F ~D"
+                            (name-to-code :draw-circle)
+                            frame index-in-frame
+                            id x y depth r color)))

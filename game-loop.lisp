@@ -4,6 +4,7 @@
            :stop-game-loop)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :send-frame-start
+                :send-draw-circle
                 :send-frame-end)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server)
@@ -23,6 +24,10 @@
   (let ((frame *current-frame*)
         (index-in-frame 0))
     (send-frame-start frame (incf index-in-frame))
+    (send-draw-circle frame (incf index-in-frame) 0
+                      :x 200 :y (+ 300 (* 100 (sin (/ *current-frame* 2))))
+                      :depth 0
+                      :r 40 :color #xff0000)
     (send-frame-end frame (incf index-in-frame))))
 
 (defun start-game-loop ()
