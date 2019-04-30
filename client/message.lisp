@@ -45,18 +45,29 @@
 (defun.ps push-message-to-cach (parsed-message)
   (*frame-json-cache*.push parsed-message))
 
-(defun.ps process-message (message)
+;; debug
+(defun.ps print-message-stat (message-stat)
+  (let ((total 0)
+        (text ""))
+    (dolist (key (sort (-object.keys message-stat) (lambda (a b) (< a b))))
+      (incf text (+ (code-to-name key) ":" #\Tab
+                    (gethash key message-stat) #\Newline)))
+    (setf (chain document (get-element-by-id "js-code") value) text)))
+
+(defun.ps+ process-message (message)
   (let ((parsed-message (receiving-to-json message)))
     (push-message-to-cach parsed-message)
     (when (target-kind-p :frame-end parsed-message)
-      (symbol-macrolet ((value (chain document (get-element-by-id "js-code") value)))
-        (setf value "")
+      (let ((message-stat (make-hash-table)))
         (dolist (parsed *frame-json-cache*)
-          (incf value ((@ #j.JSON# stringify) parsed))
-          (incf value "
-")
-          (when (draw-code-p (gethash :kind parsed))
-            (push-draw-command-to-buffer parsed))))
+          (let ((kind-code (gethash :kind parsed)))
+            (symbol-macrolet ((count (gethash kind-code message-stat)))
+              (unless count
+                (setf count 0))
+              (incf count))
+            (when (draw-code-p kind-code)
+              (push-draw-command-to-buffer parsed))))
+        (print-message-stat message-stat))
       (queue-draw-commands-in-buffer)
       (setf *frame-json-cache* (list)))))
 
