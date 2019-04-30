@@ -10,4 +10,4 @@
 
            :send-from-server
 
-           :make-hot-load-middleware))
+           :make-client-side-rendering-middleware))

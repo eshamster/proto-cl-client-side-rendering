@@ -21,11 +21,11 @@
         *server*
         (clack:clackup
          (lack:builder
-          (make-hot-load-middleware
-           :main-js-path (merge-pathnames
-                          "js/main.js"
-                          (asdf:component-pathname
-                           (asdf:find-system :proto-cl-client-side-rendering)))
+          (make-client-side-rendering-middleware
+           :client-js-path (merge-pathnames
+                            "js/client.js"
+                            (asdf:component-pathname
+                             (asdf:find-system :proto-cl-client-side-rendering)))
            :string-url "/ws")
           *static-app*)
          :port port)))
