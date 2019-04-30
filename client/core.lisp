@@ -5,6 +5,10 @@
   (:import-from :proto-cl-client-side-rendering/client/graphics
                 :make-solid-circle
                 :make-wired-circle)
+  (:import-from :proto-cl-client-side-rendering/client/message
+                :dequeue-draw-commands
+                :interpret-draw-command
+                :process-message)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name
                 :name-to-code
@@ -49,48 +53,6 @@
                         :if-does-not-exist :create)
     (princ (with-use-ps-pack (:this))
            file)))
-
-;; --- process message --- ;;
-
-(defvar.ps+ *frame-json-cache* (list)) ; per frame
-
-(defvar.ps+ *draw-command-buffer* (list)) ; per frame
-(defvar.ps+ *draw-command-queue* (list))  ; frames
-
-(defun.ps push-draw-command-to-buffer (parsed-message)
-  (*draw-command-buffer*.push parsed-message))
-
-(defun.ps queue-draw-commands-in-buffer ()
-  (*draw-command-queue*.unshift *draw-command-buffer*)
-  (setf *draw-command-buffer* (list)))
-
-(defun.ps dequeue-draw-commands ()
-  (*draw-command-queue*.pop))
-
-(defun.ps push-message-to-cach (parsed-message)
-  (*frame-json-cache*.push parsed-message))
-
-(defun.ps process-message (message)
-  (let ((parsed-message (receiving-to-json message)))
-    (push-message-to-cach parsed-message)
-    (when (target-kind-p :frame-end parsed-message)
-      (symbol-macrolet ((value (chain document (get-element-by-id "js-code") value)))
-        (setf value "")
-        (dolist (parsed *frame-json-cache*)
-          (incf value ((@ #j.JSON# stringify) parsed))
-          (incf value "
-")
-          (when (draw-code-p (gethash :kind parsed))
-            (push-draw-command-to-buffer parsed))))
-      (queue-draw-commands-in-buffer)
-      (setf *frame-json-cache* (list)))))
-
-(defun.ps+ target-kind-p (kind parsed-message)
-  (eq (gethash :kind parsed-message)
-      (name-to-code kind)))
-
-(defun.ps receiving-to-json (message)
-  (#j.JSON.parse# message))
 
 ;; --- graphic --- ;;
 
@@ -161,24 +123,12 @@
   (loop :while (> scene.children.length 0)
      :do (scene.remove (@ scene children 0))))
 
-(defun.ps update-draw (scene)
+(defun.ps+ update-draw (scene)
   (let ((draw-commands (dequeue-draw-commands)))
     (when draw-commands
       (clear-scene scene)
       (dolist (command draw-commands)
-        (let ((kind (code-to-name (gethash :kind command)))
-              (data (gethash :data command)))
-          (ecase kind
-            (:draw-circle
-             (let ((mesh (if (number-to-bool (gethash :fill-p data))
-                             (make-solid-circle :r (gethash :r data)
-                                                :color (gethash :color data))
-                             (make-wired-circle :r (gethash :r data)
-                                                :color (gethash :color data)))))
-               (mesh.position.set (gethash :x data)
-                                  (gethash :y data)
-                                  (gethash :depth data))
-               (scene.add mesh)))))))))
+        (interpret-draw-command scene command)))))
 
 (def-top-level-form.ps :run-start-2d-game
   (start-2d-game :screen-width 800 :screen-height 600
