@@ -27,8 +27,7 @@
                :jonathan
                :parenscript
                :ps-experiment
-               :proto-cl-client-side-rendering/main
-               :proto-cl-client-side-rendering/playground)
+               :proto-cl-client-side-rendering/main)
   :description "A sample of Client side rendering in Common Lisp"
   :long-description
   #.(read-file-string

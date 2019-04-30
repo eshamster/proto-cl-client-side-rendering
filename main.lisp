@@ -2,12 +2,16 @@
   (:nicknames :proto-cl-client-side-rendering)
   (:use :cl
         :proto-cl-client-side-rendering/game-loop
-        :proto-cl-client-side-rendering/ws-server
-        :proto-cl-client-side-rendering/server
-        :proto-cl-client-side-rendering/middleware)
-  (:export :start
-           :stop
+        :proto-cl-client-side-rendering/middleware
+        :proto-cl-client-side-rendering/protocol
+        :proto-cl-client-side-rendering/utils)
+  (:export :start-game-loop
+           :stop-game-loop
+           :draw-circle
 
-           :send-from-server
+           :make-client-side-rendering-middleware
 
-           :make-client-side-rendering-middleware))
+           :send-draw-circle
+
+           :ensure-js-files
+           :make-src-list-for-script-tag))

@@ -1,7 +1,8 @@
 (defpackage proto-cl-client-side-rendering/game-loop
   (:use :cl)
   (:export :start-game-loop
-           :stop-game-loop)
+           :stop-game-loop
+           :draw-circle)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :send-frame-start
                 :send-draw-circle
@@ -14,27 +15,11 @@
 (in-package :proto-cl-client-side-rendering/game-loop)
 
 (defvar *current-frame* 0)
+(defvar *index-in-frame* 0)
 (defvar *stop-game-loop-p* nil)
 (defvar *loop-thread* nil)
 
-(defun update ()
-  (incf *current-frame*))
-
-(defun send-draw ()
-  (let ((frame *current-frame*)
-        (index-in-frame 0))
-    (send-frame-start frame (incf index-in-frame))
-    (send-draw-circle frame (incf index-in-frame) :id 0
-                      :x 200 :y (+ 300 (* 100 (sin (/ *current-frame* 2))))
-                      :depth 0
-                      :r 40 :color #xff0000)
-    (send-draw-circle frame (incf index-in-frame) :id 1
-                      :x 500 :y (+ 300 (* 100 (sin (/ *current-frame* 3))))
-                      :depth 0 :fill-p t
-                      :r 40 :color #x00ffff)
-    (send-frame-end frame (incf index-in-frame))))
-
-(defun start-game-loop ()
+(defun start-game-loop (&key (update-func (lambda ())))
   (stop-game-loop)
   (setf *stop-game-loop-p* nil
         *current-frame* 0)
@@ -43,12 +28,26 @@
                        (loop :do
                             (when *stop-game-loop-p*
                               (return))
-                            (update)
-                            (send-draw)
-                            (sleep 1))))))
+                            (setf *index-in-frame* 0)
+                            (incf *current-frame*)
+                            (unwind-protect
+                                 (progn
+                                   (send-frame-start *current-frame* (incf *index-in-frame*))
+                                   (funcall update-func))
+                              (send-frame-end *current-frame* (incf *index-in-frame*)))
+                            (sleep 0.5))))))
 
 (defun stop-game-loop ()
   (setf *stop-game-loop-p* t)
   (when *loop-thread*
     (join-thread *loop-thread*)
     (setf *loop-thread* nil)))
+
+;; --- sender --- ;;
+
+;; TODO: Consider more proper package
+
+(defun draw-circle (&key id x y depth color fill-p r)
+  (send-draw-circle *current-frame* (incf *index-in-frame*)
+                    :id id :x x :y y :depth depth
+                    :color color :fill-p fill-p :r r))

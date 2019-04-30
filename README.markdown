@@ -2,13 +2,13 @@
 
 Proto-Cl-Client-Side-Rendering is a prototype of client side rendering in Common Lisp.
 
-## Installation and Usage
+## Execute sample
 
-Please clone this to where quicklisp (asdf) can find. Then, load it by `ql:quickload` and start server. After that, you can access to http://localhost:5000 .
+Please clone this (and [ps-experiment](https://github.com/eshamster/ps-experiment)) to where quicklisp (asdf) can find. Then, load it by `ql:quickload` and start server. After that, you can access to http://localhost:5000 .
 
 ```lisp
-CL-USER> (ql:quickload :proto-cl-client-side-rendering)
-CL-USER> (proto-cl-client-side-rendering:start :port 5000)
+CL-USER> (ql:quickload :sample-proto-cl-client-side-rendering)
+CL-USER> (sample-proto-cl-client-side-rendering:start :port 5000)
 ```
 
 
