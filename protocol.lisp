@@ -10,6 +10,8 @@
            :number-to-bool)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server)
+  (:import-from :jonathan
+                :to-json)
   (:import-from :ps-experiment
                 :defvar.ps+
                 :defun.ps+
@@ -56,20 +58,42 @@
 
 ;; --- sender --- ;;
 
+(defun down-case-keyword (data)
+  (labels ((down (keyword)
+             (intern (string-downcase (symbol-name keyword))
+                     "KEYWORD"))
+           (rec (lst)
+             (symbol-macrolet ((head (car lst)))
+               (if (listp head)
+                   (when head
+                     (rec head))
+                   (when (keywordp head)
+                     (setf head (down head)))))
+             (when (cdr lst)
+               (rec (cdr lst)))))
+    (rec data)
+    data))
+
+(defun send-message (kind-name frame index-in-frame data)
+  (send-from-server
+   (to-json (down-case-keyword `(:kind ,(name-to-code kind-name)
+                                 :frame ,frame
+                                 :no ,index-in-frame
+                                 :data ,data)))))
+
 (defun send-frame-start (frame index-in-frame)
-  (send-from-server (format nil "~D ~D ~D"
-                            (name-to-code :frame-start)
-                            frame index-in-frame)))
+  (send-message :frame-start frame index-in-frame '()))
 
 (defun send-frame-end (frame index-in-frame)
-  (send-from-server (format nil "~D ~D ~D"
-                            (name-to-code :frame-end)
-                            frame index-in-frame)))
+  (send-message :frame-end frame index-in-frame '()))
 
-(defun send-draw-circle (frame index-in-frame id &key x y depth color fill-p r)
-  (send-from-server (format nil "~D ~D ~D ~D ~F ~F ~F ~D ~D ~F"
-                            (name-to-code :draw-circle)
-                            frame index-in-frame
-                            id x y depth color
-                            (bool-to-number fill-p)
-                            r)))
+(defun send-draw-message (kind-name frame index-in-frame data
+                          &key id x y depth color)
+  (send-message kind-name frame index-in-frame
+                `(:id ,id :x ,x :y ,y :depth ,depth :color ,color ,@data)))
+
+(defun send-draw-circle (frame index-in-frame &key id x y depth color fill-p r)
+  (send-draw-message :draw-circle frame index-in-frame
+                     `(:fill-p ,(bool-to-number fill-p) :r ,r)
+                     :id id
+                     :x x :y y :depth depth :color color))

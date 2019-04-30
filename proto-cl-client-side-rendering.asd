@@ -24,6 +24,7 @@
                :ningle
                :cl-markup
                :cl-ppcre
+               :jonathan
                :parenscript
                :ps-experiment
                :proto-cl-client-side-rendering/main

@@ -89,40 +89,8 @@
   (eq (gethash :kind parsed-message)
       (name-to-code kind)))
 
-(defun.ps my-parse-bool (str)
-  (number-to-bool (parse-int str)))
-
-(defun.ps+ array-pair-to-hash (key-array value-array value-processor-array)
-  (let ((result (make-hash-table)))
-    (loop
-       :for key :in key-array
-       :for value :in value-array
-       :for value-processor :in value-processor-array
-       :do (setf (gethash key result) (funcall value-processor value)))
-    result))
-
 (defun.ps receiving-to-json (message)
-  (let* ((split-message (message.split " "))
-         (kind-code (parse-int (nth 0 split-message)))
-         (kind (code-to-name kind-code))
-         (frame (parse-int (nth 1 split-message)))
-         (index-in-frame (parse-int (nth 2 split-message)))
-         (body (nthcdr 3 split-message))
-         (data (case kind
-                 (:draw-circle
-                  (array-pair-to-hash
-                   (list :id :x :y :depth
-                         :color :fill-p
-                         :r)
-                   body
-                   (list #'parse-int #'parse-float #'parse-float #'parse-float
-                         #'parse-int #'my-parse-bool
-                         #'parse-float)))
-                 (t (ps:create :message body)))))
-    (ps:create :kind kind-code
-               :frame frame
-               :no index-in-frame
-               :data data)))
+  (#j.JSON.parse# message))
 
 ;; --- graphic --- ;;
 
@@ -202,7 +170,7 @@
               (data (gethash :data command)))
           (ecase kind
             (:draw-circle
-             (let ((mesh (if (gethash :fill-p data)
+             (let ((mesh (if (number-to-bool (gethash :fill-p data))
                              (make-solid-circle :r (gethash :r data)
                                                 :color (gethash :color data))
                              (make-wired-circle :r (gethash :r data)
