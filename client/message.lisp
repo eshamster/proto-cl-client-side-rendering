@@ -4,6 +4,8 @@
            :interpret-draw-command
            :process-message)
   (:import-from :proto-cl-client-side-rendering/client/graphics
+                :make-solid-rect
+                :make-wired-rect
                 :make-solid-circle
                 :make-wired-circle)
   (:import-from :proto-cl-client-side-rendering/protocol
@@ -76,8 +78,19 @@
                       (make-solid-circle :r (gethash :r data)
                                          :color (gethash :color data))
                       (make-wired-circle :r (gethash :r data)
-                                         :color (gethash :color data)))))))
+                                         :color (gethash :color data))))
+                 (:draw-rect
+                  (if (number-to-bool (gethash :fill-p data))
+                      (make-solid-rect :width (gethash :width data)
+                                       :height (gethash :height data)
+                                       :color (gethash :color data))
+                      (make-wired-rect :width (gethash :width data)
+                                       :height (gethash :height data)
+                                       :color (gethash :color data)))))))
     (mesh.position.set (gethash :x data)
                        (gethash :y data)
                        (gethash :depth data))
+    (let ((rotate (gethash :rotate data)))
+      (when rotate
+        (setf mesh.rotation.z rotate)))
     (scene.add mesh)))

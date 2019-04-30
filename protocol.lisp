@@ -4,6 +4,7 @@
            :name-to-code
            :send-frame-start
            :send-frame-end
+           :send-draw-rect
            :send-draw-circle
            :draw-code-p
            :bool-to-number
@@ -91,6 +92,14 @@
                           &key id x y depth color)
   (send-message kind-name frame index-in-frame
                 `(:id ,id :x ,x :y ,y :depth ,depth :color ,color ,@data)))
+
+(defun send-draw-rect (frame index-in-frame
+                       &key id x y depth color fill-p width height rotate)
+  (send-draw-message :draw-rect frame index-in-frame
+                     `(:fill-p ,(bool-to-number fill-p)
+                       :width ,width :height ,height :rotate ,rotate)
+                     :id id
+                     :x x :y y :depth depth :color color))
 
 (defun send-draw-circle (frame index-in-frame &key id x y depth color fill-p r)
   (send-draw-message :draw-circle frame index-in-frame

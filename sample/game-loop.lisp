@@ -5,6 +5,7 @@
   (:import-from :proto-cl-client-side-rendering
                 :start-game-loop
                 :stop-game-loop
+                :draw-rect
                 :draw-circle))
 (in-package :sample-proto-cl-client-side-rendering/game-loop)
 
@@ -20,11 +21,24 @@
 
 (defun update ()
   (incf *temp-counter*)
-  (draw-circle :id 0
-               :x 200 :y (+ 300 (* 100 (sin (/ *temp-counter* 2))))
-               :depth 0
-               :r 40 :color #xff0000)
-  (draw-circle :id 1
-               :x 500 :y (+ 300 (* 100 (sin (/ *temp-counter* 3))))
+  (let ((id 0))
+    (draw-circle :id (incf id)
+                 :x 200 :y (+ 300 (* 100 (sin (/ *temp-counter* 2))))
+                 :depth 0
+                 :r 40 :color #xff0000)
+    (draw-circle :id (incf id)
+                 :x 300 :y (+ 300 (* 100 (sin (/ *temp-counter* 3))))
+                 :depth 0 :fill-p t
+                 :r 40 :color #x00ffff)
+    (draw-rect :id (incf id)
+               :x 400 :y 300
+               :depth 0 :fill-p nil
+               :width 20 :height 40
+               :rotate (* 1/5 *temp-counter*)
+               :color #x00ff00)
+    (draw-rect :id (incf id)
+               :x 500 :y 300
                :depth 0 :fill-p t
-               :r 40 :color #x00ffff))
+               :width 20 :height 40
+               :rotate (* -1/5 *temp-counter*)
+               :color #xff00ff)))

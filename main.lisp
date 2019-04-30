@@ -7,6 +7,7 @@
         :proto-cl-client-side-rendering/utils)
   (:export :start-game-loop
            :stop-game-loop
+           :draw-rect
            :draw-circle
 
            :make-client-side-rendering-middleware
