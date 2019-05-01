@@ -50,8 +50,12 @@
   (let ((total 0)
         (text ""))
     (dolist (key (sort (-object.keys message-stat) (lambda (a b) (< a b))))
-      (incf text (+ (code-to-name key) ":" #\Tab
-                    (gethash key message-stat) #\Newline)))
+      (let ((count (gethash key message-stat)))
+        (incf text (+ (code-to-name key) ":" #\Tab
+                      count #\Newline))
+        (incf total count)))
+    (setf text
+          (+ "TOTAL: " total #\Newline "---" #\Newline text))
     (setf (chain document (get-element-by-id "js-code") value) text)))
 
 (defun.ps+ process-message (message)
