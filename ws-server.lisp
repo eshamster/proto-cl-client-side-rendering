@@ -53,7 +53,7 @@
                        *message-processor-table*))))
       (lambda (responder)
         (declare (ignore responder))
-        (format t "~&Server connected")
+        (format t "~&Connection started: ~D" client-id)
         (start-connection server)))))
 
 (defun send-from-server (message)
@@ -61,7 +61,7 @@
     (let ((server (client-info-target-server client-info)))
       (case (ready-state server)
         (:open (send server message))
-        (:closed (print "Connecction closed"),
+        (:closed (format t "~&Connection closed: ~D" (client-info-id client-info))
                  (setf *client-info-list* (remove client-info *client-info-list*)))
         ;; otherwise do nothing
         ))))
