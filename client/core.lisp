@@ -1,19 +1,12 @@
 (defpackage proto-cl-client-side-rendering/client/core
   (:use :cl)
   (:export :output-client-js)
-  ;; temporal
-  (:import-from :proto-cl-client-side-rendering/client/graphics
-                :make-solid-circle
-                :make-wired-circle)
   (:import-from :proto-cl-client-side-rendering/client/message
                 :dequeue-draw-commands
                 :interpret-draw-command
                 :process-message)
-  (:import-from :proto-cl-client-side-rendering/protocol
-                :code-to-name
-                :name-to-code
-                :draw-code-p
-                :number-to-bool)
+  (:import-from :proto-cl-client-side-rendering/client/socket
+                :register-socket-on-message)
   (:import-from :parenscript
                 :chain
                 :new
@@ -30,20 +23,6 @@
 
 (enable-ps-experiment-syntax)
 
-(defvar.ps ws-socket
-    (new (#j.WebSocket# (+ "ws://" window.location.host "/ws"))))
-
-(def-top-level-form.ps register-on-message
-  (setf ws-socket.onmessage
-        (lambda (e)
-          (process-message e.data))))
-
-#|
-;; Currently not used but remained for reference to send info to server.
-(defun.ps send-ps-code ()
-  (ws-socket.send (ps-code-value)))
-|#
-
 ;; --- compiler -- - ;;
 
 (defun output-client-js (file-path)
@@ -51,7 +30,8 @@
                         :direction :output
                         :if-exists :supersede
                         :if-does-not-exist :create)
-    (princ (with-use-ps-pack (:this))
+    (princ (with-use-ps-pack (:this)
+             (register-socket-on-message #'process-message))
            file)))
 
 ;; --- graphic --- ;;
