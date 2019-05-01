@@ -1,6 +1,8 @@
 (defpackage proto-cl-client-side-rendering/client/core
   (:use :cl)
   (:export :output-client-js)
+  (:import-from :proto-cl-client-side-rendering/client/input
+                :init-input)
   (:import-from :proto-cl-client-side-rendering/client/message
                 :dequeue-draw-commands
                 :interpret-draw-command
@@ -31,7 +33,8 @@
                         :if-exists :supersede
                         :if-does-not-exist :create)
     (princ (with-use-ps-pack (:this)
-             (register-socket-on-message #'process-message))
+             (register-socket-on-message #'process-message)
+             (init-input))
            file)))
 
 ;; --- graphic --- ;;

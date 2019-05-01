@@ -4,7 +4,9 @@
         :proto-cl-client-side-rendering/game-loop
         :proto-cl-client-side-rendering/middleware
         :proto-cl-client-side-rendering/protocol
-        :proto-cl-client-side-rendering/utils)
+        :proto-cl-client-side-rendering/utils
+        ;; temp to load (TODO: remove if proper package load it)
+        :proto-cl-client-side-rendering/input)
   (:export :start-game-loop
            :stop-game-loop
            :draw-rect

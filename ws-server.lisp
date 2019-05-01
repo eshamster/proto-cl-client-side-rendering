@@ -1,7 +1,10 @@
 (defpackage proto-cl-client-side-rendering/ws-server
   (:use :cl)
   (:export :*ws-app*
-           :send-from-server)
+           :send-from-server
+           :register-message-processor)
+  (:import-from :jonathan
+                :parse)
   (:import-from :websocket-driver
                 :make-server
                 :on
@@ -10,18 +13,30 @@
                 :ready-state))
 (in-package :proto-cl-client-side-rendering/ws-server)
 
-;; --- server --- ;;
-
 (defvar *server-instance-list* nil)
+
+(defvar *message-processor-table* (make-hash-table))
+
+(defun register-message-processor (id-as-symbol callback)
+  (setf (gethash id-as-symbol *message-processor-table*) callback))
 
 (defparameter *ws-app*
   (lambda (env)
     (let ((server (make-server env)))
       (push server *server-instance-list*)
       (on :message server
-          (lambda (ps-code)
-            (format t "~&Server got: ~A~%" ps-code)
-            (send-from-server ps-code)))
+          (lambda (json-string)
+            (let ((temp-table (parse json-string :as :hash-table))
+                  (parsed-table (make-hash-table)))
+              (maphash (lambda (key value)
+                         (setf (gethash (intern (string-upcase key) "KEYWORD")
+                                        parsed-table)
+                               value))
+                       temp-table)
+              (maphash (lambda (id callback)
+                         (declare (ignore id))
+                         (funcall callback parsed-table))
+                       *message-processor-table*))))
       (lambda (responder)
         (declare (ignore responder))
         (format t "~&Server connected")

@@ -28,7 +28,9 @@
   (dolist (pair '((0 :frame-start)
                   (1 :frame-end)
                   (11 :draw-rect)
-                  (12 :draw-circle)))
+                  (12 :draw-circle)
+                  (-1 :key-down)
+                  (-2 :key-up)))
     (let ((code (car pair))
           (name (cadr pair)))
       (setf (gethash code *code-to-name-table*) name
