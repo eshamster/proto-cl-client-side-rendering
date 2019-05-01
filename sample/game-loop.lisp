@@ -6,7 +6,9 @@
                 :start-game-loop
                 :stop-game-loop
                 :draw-rect
-                :draw-circle))
+                :draw-circle
+
+                :key-down-p))
 (in-package :sample-proto-cl-client-side-rendering/game-loop)
 
 (defun start-sample-game-loop ()
@@ -18,6 +20,10 @@
 ;; --- internal --- ;;
 
 (defvar *temp-counter* 0)
+
+(defvar *temp-x* 100)
+(defvar *temp-y* 300)
+(defparameter *temp-speed* 10)
 
 (defun update ()
   (incf *temp-counter*)
@@ -41,4 +47,18 @@
                :depth 0 :fill-p t
                :width 20 :height 40
                :rotate (* -1/5 *temp-counter*)
-               :color #xff00ff)))
+               :color #xff00ff)
+    ;; try keyboard
+    (let ((client-id 0))
+      (when (key-down-p client-id :up)
+        (incf *temp-y* *temp-speed*))
+      (when (key-down-p client-id :down)
+        (decf *temp-y* *temp-speed*))
+      (when (key-down-p client-id :right)
+        (incf *temp-x* *temp-speed*))
+      (when (key-down-p client-id :left)
+        (decf *temp-x* *temp-speed*)))
+    (draw-circle :id (incf id)
+                 :x *temp-x* :y *temp-y*
+                 :depth 10 :fill-p t
+                 :r 50 :color #xffffff)))

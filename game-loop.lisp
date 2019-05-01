@@ -4,6 +4,8 @@
            :stop-game-loop
            :draw-rect
            :draw-circle)
+  (:import-from :proto-cl-client-side-rendering/input
+                :update-input)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :send-frame-start
                 :send-draw-rect
@@ -32,6 +34,7 @@
                               (return))
                             (setf *index-in-frame* 0)
                             (incf *current-frame*)
+                            (update-input)
                             (unwind-protect
                                  (progn
                                    (send-frame-start *current-frame* (incf *index-in-frame*))
