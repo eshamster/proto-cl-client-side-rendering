@@ -8,6 +8,7 @@
                 :draw-rect
                 :draw-circle
 
+                :get-client-id-list
                 :key-down-p))
 (in-package :sample-proto-cl-client-side-rendering/game-loop)
 
@@ -49,7 +50,7 @@
                :rotate (* -1/5 *temp-counter*)
                :color #xff00ff)
     ;; try keyboard
-    (let ((client-id 0))
+    (dolist (client-id (get-client-id-list))
       (when (key-down-p client-id :up)
         (incf *temp-y* *temp-speed*))
       (when (key-down-p client-id :down)

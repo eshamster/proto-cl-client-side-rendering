@@ -2,7 +2,8 @@
   (:use :cl)
   (:export :*ws-app*
            :send-from-server
-           :register-message-processor)
+           :register-message-processor
+           :get-client-id-list)
   (:import-from :jonathan
                 :parse)
   (:import-from :websocket-driver
@@ -13,7 +14,18 @@
                 :ready-state))
 (in-package :proto-cl-client-side-rendering/ws-server)
 
-(defvar *server-instance-list* nil)
+(defvar *latest-client-id* 0)
+
+(defstruct client-info
+  target-server
+  (id (incf *latest-client-id*)))
+
+(defvar *client-info-list* nil)
+
+(defun get-client-id-list ()
+  (sort (loop :for info :in *client-info-list*
+           :collect (client-info-id info))
+        #'<))
 
 (defvar *message-processor-table* (make-hash-table))
 
@@ -22,8 +34,10 @@
 
 (defparameter *ws-app*
   (lambda (env)
-    (let ((server (make-server env)))
-      (push server *server-instance-list*)
+    (let* ((server (make-server env))
+           (client-info (make-client-info :target-server server))
+           (client-id (client-info-id client-info)))
+      (push client-info *client-info-list*)
       (on :message server
           (lambda (json-string)
             (let ((temp-table (parse json-string :as :hash-table))
@@ -35,8 +49,7 @@
                        temp-table)
               (maphash (lambda (id callback)
                          (declare (ignore id))
-                         (let ((client-id 0)) ; TODO: (dummy)
-                           (funcall callback client-id parsed-table)))
+                         (funcall callback client-id parsed-table))
                        *message-processor-table*))))
       (lambda (responder)
         (declare (ignore responder))
@@ -44,10 +57,11 @@
         (start-connection server)))))
 
 (defun send-from-server (message)
-  (dolist (server (copy-list *server-instance-list*))
-    (case (ready-state server)
-      (:open (send server message))
-      (:closed (print "Connecction closed")
-               (setf *server-instance-list* (remove server *server-instance-list*)))
-      ;; otherwise do nothing
-      )))
+  (dolist (client-info (copy-list *client-info-list*))
+    (let ((server (client-info-target-server client-info)))
+      (case (ready-state server)
+        (:open (send server message))
+        (:closed (print "Connecction closed"),
+                 (setf *client-info-list* (remove client-info *client-info-list*)))
+        ;; otherwise do nothing
+        ))))

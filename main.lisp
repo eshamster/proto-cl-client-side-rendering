@@ -5,7 +5,8 @@
         :proto-cl-client-side-rendering/input
         :proto-cl-client-side-rendering/middleware
         :proto-cl-client-side-rendering/protocol
-        :proto-cl-client-side-rendering/utils)
+        :proto-cl-client-side-rendering/utils
+        :proto-cl-client-side-rendering/ws-server)
   (:export ;; game-loop
            :start-game-loop
            :stop-game-loop
@@ -22,4 +23,6 @@
            :send-draw-circle
            ;; utils
            :ensure-js-files
-           :make-src-list-for-script-tag))
+           :make-src-list-for-script-tag
+           ;; ws-server
+           :get-client-id-list))
