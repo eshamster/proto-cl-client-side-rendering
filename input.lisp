@@ -5,9 +5,16 @@
            :key-down-now-p
            :key-down-p
            :key-up-now-p
-           :key-up-p)
+           :key-up-p
+
+           :mouse-down-now-p
+           :mouse-down-p
+           :mouse-up-now-p
+           :mouse-up-p
+           :get-mouse-pos)
   (:import-from :proto-cl-client-side-rendering/protocol
-                :name-to-code)
+                :name-to-code
+                :code-to-name)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :register-message-processor)
   (:import-from :alexandria
@@ -18,15 +25,37 @@
 
 (progn
   (defun process-input-message (client-id message-table)
-    (set-raw-key-state client-id
-                       (make-keyword
-                        (string-upcase (gethash :key message-table)))
-                       (= (gethash :kind message-table)
-                          (name-to-code :key-down))))
+    (let ((kind (code-to-name (gethash :kind message-table))))
+      (case kind
+        ((:key-down :key-up)
+         (set-raw-key-state client-id
+                            (make-keyword
+                             (string-upcase (gethash :key message-table)))
+                            (eq kind :key-down)))
+        ((:mouse-down :mouse-up)
+         (let ((raw-button (gethash :button message-table)))
+           ;; If raw-button is not string, the button is not implemented yet.
+           (when (stringp raw-button)
+             (let* ((button (make-keyword (string-upcase raw-button)))
+                    (key-name (mouse-button-to-key-name button)))
+               (when key-name
+                 (set-raw-key-state client-id
+                                    key-name
+                                    (eq kind :mouse-down))))))
+         (update-mouse-pos-buffer
+          client-id
+          (gethash :x message-table)
+          (gethash :y message-table)))
+        (:mouse-move
+         (update-mouse-pos-buffer
+          client-id
+          (gethash :x message-table)
+          (gethash :y message-table))))))
 
   (register-message-processor 'input-processor #'process-input-message))
 
 (defun update-input ()
+  ;; keyboard
   (maphash (lambda (id info)
              (declare (ignore id))
              (let ((count-table (client-input-info-key-count-table info))
@@ -37,7 +66,11 @@
                                  (gethash key count-table 0)
                                  down-p)))
                         key-down-p-table)))
-           *client-input-info-table*))
+           *client-input-info-table*)
+  ;; mouse
+  (update-mouse-pos))
+
+;; - keyboard - ;;
 
 (defun key-down-now-p (client-id key)
   (down-now-p (get-key-count client-id key)))
@@ -48,7 +81,25 @@
 (defun key-up-p (client-id key)
   (up-p (get-key-count client-id key)))
 
+;; - mouse- ;;
+
+(defun mouse-down-now-p (client-id button)
+  (key-down-now-p client-id (mouse-button-to-key-name button)))
+(defun mouse-down-p (client-id button)
+  (key-down-p client-id (mouse-button-to-key-name button)))
+(defun mouse-up-now-p (client-id button)
+  (key-up-now-p client-id (mouse-button-to-key-name button)))
+(defun mouse-up-p (client-id button)
+  (key-up-p client-id (mouse-button-to-key-name button)))
+
+(defun get-mouse-pos (client-id)
+  "Returns (value x y)"
+  (let ((pos (gethash client-id *mouse-pos-table*)))
+    (values (mouse-pos-x pos) (mouse-pos-y pos))))
+
 ;; --- internal --- ;;
+
+;; - keyboard (and mouse click) - ;;
 
 (defstruct client-input-info
   (key-down-p-table (make-hash-table))
@@ -74,6 +125,34 @@
            (client-input-info-key-count-table
             (get-client-info client-id))
            -2)) ; -2 is ":up" state
+
+;; - mouse - ;;
+
+(defstruct mouse-pos x y x-buffer y-buffer)
+
+(defvar *mouse-pos-table* (make-hash-table))
+
+(defun mouse-button-to-key-name (button)
+  (case button
+    (:left :mouse-left)
+    (:right :mouse-right)
+    (:center :mouse-center)))
+
+(defun update-mouse-pos-buffer (client-id x y)
+  (let ((pos (gethash client-id *mouse-pos-table*)))
+    (unless pos
+      (setf pos (make-mouse-pos)
+            (gethash client-id *mouse-pos-table*) pos))
+    (setf (mouse-pos-x-buffer pos) x
+          (mouse-pos-y-buffer pos) y)))
+
+(defun update-mouse-pos ()
+  (maphash (lambda (client-id pos)
+             (declare (ignore client-id))
+             (with-slots (x y x-buffer y-buffer) pos
+               (setf x x-buffer
+                     y y-buffer)))
+           *mouse-pos-table*))
 
 ;; - utils - ;;
 

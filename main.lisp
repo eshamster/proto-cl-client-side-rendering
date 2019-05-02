@@ -18,6 +18,11 @@
            :key-down-p
            :key-up-now-p
            :key-up-p
+           :mouse-down-now-p
+           :mouse-down-p
+           :mouse-up-now-p
+           :mouse-up-p
+           :get-mouse-pos
            ;; middleware
            :make-client-side-rendering-middleware
            ;; protocol

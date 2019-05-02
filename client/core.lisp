@@ -1,6 +1,9 @@
 (defpackage proto-cl-client-side-rendering/client/core
   (:use :cl)
   (:export :output-client-js)
+  (:import-from :proto-cl-client-side-rendering/client/global
+                :set-rendered-dom
+                :set-screen-size)
   (:import-from :proto-cl-client-side-rendering/client/input
                 :init-input)
   (:import-from :proto-cl-client-side-rendering/client/message
@@ -52,6 +55,13 @@
     (camera.position.set 0 0 z)
     camera))
 
+;; TODO: Fix the following issue
+;; This is a temporal solution to avoid unintentional scroll bar
+;; when the height size eqauls to 100% of the screen height.
+;; In such case, 7px area is appeared both in top and bottom.
+;; But the cause is not revealed.
+(defvar.ps+ *window-height-adjust* 14)
+
 (defun.ps initialize-screen-size (rendered-dom renderer screen-width screen-height resize-to-screen-p)
   (setf *resize-to-screen-p* resize-to-screen-p)
   (labels ((calc-scale ()
@@ -67,7 +77,8 @@
            (resize ()
              (let ((scale (if *resize-to-screen-p* (calc-scale) 1)))
                (set-size (* screen-width scale)
-                         (* screen-height scale)))))
+                         (* screen-height scale))
+               (set-screen-size screen-width screen-height scale))))
     (resize)
     (let ((resize-timer nil))
       (window.add-event-listener
@@ -81,12 +92,13 @@
 
 (defun.ps start-2d-game (&key screen-width screen-height
                               rendered-dom
-                              (resize-to-screen-p nil)
+                              (resize-to-screen-p t)
                               (init-function (lambda (scene) nil))
                               (update-function (lambda (scene) nil)))
   (let* ((scene (new (#j.THREE.Scene#)))
          (renderer (new #j.THREE.WebGLRenderer#))
          (camera (init-camera 0 0 screen-width screen-height)))
+    (set-rendered-dom rendered-dom)
     (initialize-screen-size rendered-dom renderer
                             screen-width screen-height
                             resize-to-screen-p)

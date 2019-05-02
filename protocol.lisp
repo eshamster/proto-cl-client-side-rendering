@@ -34,7 +34,10 @@
                   (21 :log-console)
                   ;; client to server
                   (-1 :key-down)
-                  (-2 :key-up)))
+                  (-2 :key-up)
+                  (-11 :mouse-down)
+                  (-12 :mouse-up)
+                  (-13 :mouse-move)))
     (let ((code (car pair))
           (name (cadr pair)))
       (setf (gethash code *code-to-name-table*) name
