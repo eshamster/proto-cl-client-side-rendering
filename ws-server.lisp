@@ -3,7 +3,8 @@
   (:export :*ws-app*
            :send-from-server
            :register-message-processor
-           :get-client-id-list)
+           :get-client-id-list
+           :*target-client-id-list*)
   (:import-from :jonathan
                 :parse)
   (:import-from :websocket-driver
@@ -13,6 +14,10 @@
                 :start-connection
                 :ready-state))
 (in-package :proto-cl-client-side-rendering/ws-server)
+
+(defvar *target-client-id-list* :all
+  "If ':all', a message is sent to all clients.
+Otherwise, it is sent to the listed clients.")
 
 (defvar *latest-client-id* 0)
 
@@ -58,10 +63,13 @@
 
 (defun send-from-server (message)
   (dolist (client-info (copy-list *client-info-list*))
-    (let ((server (client-info-target-server client-info)))
+    (let ((server (client-info-target-server client-info))
+          (id (client-info-id client-info)))
       (case (ready-state server)
-        (:open (send server message))
-        (:closed (format t "~&Connection closed: ~D" (client-info-id client-info))
+        (:open (when (or (eq *target-client-id-list* :all)
+                         (find id *target-client-id-list*))
+                 (send server message)))
+        (:closed (format t "~&Connection closed: ~D" id)
                  (setf *client-info-list* (remove client-info *client-info-list*)))
         ;; otherwise do nothing
         ))))

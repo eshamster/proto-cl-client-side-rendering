@@ -26,4 +26,5 @@
            :ensure-js-files
            :make-src-list-for-script-tag
            ;; ws-server
-           :get-client-id-list))
+           :get-client-id-list
+           :*target-client-id-list*))

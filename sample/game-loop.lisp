@@ -10,6 +10,7 @@
                 :log-console
 
                 :get-client-id-list
+                :*target-client-id-list*
                 :key-down-p))
 (in-package :sample-proto-cl-client-side-rendering/game-loop)
 
@@ -64,4 +65,17 @@
     (draw-circle :id (incf id)
                  :x *temp-x* :y *temp-y*
                  :depth 10 :fill-p t
-                 :r 50 :color #xffffff)))
+                 :r 50 :color #xffffff)
+    ;; try sending to each client
+    (flet ((try-send (y color)
+             (draw-circle :id (incf id)
+                 :x 700 :y y
+                 :depth 10 :fill-p t
+                 :r 25 :color color)))
+      (let ((id-list (get-client-id-list)))
+        (let ((*target-client-id-list*
+               (remove-if (lambda (id) (= (mod id 2) 0)) id-list)))
+          (try-send 500 #xff0000))
+        (let ((*target-client-id-list*
+               (remove-if (lambda (id) (= (mod id 2) 1)) id-list)))
+          (try-send 450 #x0000ff))))))
