@@ -6,6 +6,7 @@
            :send-frame-end
            :send-draw-rect
            :send-draw-circle
+           :send-log-console
            :draw-code-p
            :bool-to-number
            :number-to-bool)
@@ -25,10 +26,13 @@
 (defun.ps+ initialize-table ()
   (setf *code-to-name-table* (make-hash-table)
         *name-to-code-table* (make-hash-table))
-  (dolist (pair '((0 :frame-start)
+  (dolist (pair '(;  server to client
+                  (0 :frame-start)
                   (1 :frame-end)
                   (11 :draw-rect)
                   (12 :draw-circle)
+                  (21 :log-console)
+                  ;; client to server
                   (-1 :key-down)
                   (-2 :key-up)))
     (let ((code (car pair))
@@ -84,11 +88,15 @@
                                  :no ,index-in-frame
                                  :data ,data)))))
 
+;; - start and end - ;;
+
 (defun send-frame-start (frame index-in-frame)
   (send-message :frame-start frame index-in-frame '()))
 
 (defun send-frame-end (frame index-in-frame)
   (send-message :frame-end frame index-in-frame '()))
+
+;; - draw - ;;
 
 (defun send-draw-message (kind-name frame index-in-frame data
                           &key id x y depth color)
@@ -108,3 +116,9 @@
                      `(:fill-p ,(bool-to-number fill-p) :r ,r)
                      :id id
                      :x x :y y :depth depth :color color))
+
+;; - log - ;;
+
+(defun send-log-console (frame index-in-frame &key message)
+  (send-message :log-console frame index-in-frame
+                `(:message ,message)))

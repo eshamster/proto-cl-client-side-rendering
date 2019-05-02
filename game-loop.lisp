@@ -3,13 +3,15 @@
   (:export :start-game-loop
            :stop-game-loop
            :draw-rect
-           :draw-circle)
+           :draw-circle
+           :log-console)
   (:import-from :proto-cl-client-side-rendering/input
                 :update-input)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :send-frame-start
                 :send-draw-rect
                 :send-draw-circle
+                :send-log-console
                 :send-frame-end)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server)
@@ -62,3 +64,7 @@
                   :id id :x x :y y :depth depth
                   :color color :fill-p fill-p
                   :width width :height height :rotate rotate))
+
+(defun log-console (&key message)
+  (send-log-console *current-frame* (incf *index-in-frame*)
+                    :message message))

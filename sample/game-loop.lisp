@@ -7,6 +7,7 @@
                 :stop-game-loop
                 :draw-rect
                 :draw-circle
+                :log-console
 
                 :get-client-id-list
                 :key-down-p))
@@ -49,6 +50,7 @@
                :width 20 :height 40
                :rotate (* -1/5 *temp-counter*)
                :color #xff00ff)
+    ;; (log-console :message "test") ; try logging
     ;; try keyboard
     (dolist (client-id (get-client-id-list))
       (when (key-down-p client-id :up)

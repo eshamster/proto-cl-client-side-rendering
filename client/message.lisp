@@ -69,8 +69,10 @@
               (unless count
                 (setf count 0))
               (incf count))
-            (when (draw-code-p kind-code)
-              (push-draw-command-to-buffer parsed))))
+            (cond ((eq (code-to-name kind-code) :log-console)
+                   (interpret-log-console parsed))
+                  ((draw-code-p kind-code)
+                   (push-draw-command-to-buffer parsed)))))
         (print-message-stat message-stat))
       (queue-draw-commands-in-buffer)
       (setf *frame-json-cache* (list)))))
@@ -81,6 +83,9 @@
 
 (defun.ps receiving-to-json (message)
   (#j.JSON.parse# message))
+
+(defun.ps interpret-log-console (command)
+  (console.log (@ command :data :message)))
 
 ;; TODO: The following should move to another package
 
