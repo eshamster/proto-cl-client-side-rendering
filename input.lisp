@@ -16,12 +16,11 @@
                 :name-to-code
                 :code-to-name)
   (:import-from :proto-cl-client-side-rendering/ws-server
-                :register-message-processor)
+                :register-message-processor
+                :register-callback-on-disconnecting)
   (:import-from :alexandria
                 :make-keyword))
 (in-package :proto-cl-client-side-rendering/input)
-
-;; TODO: Discard information of disconnected client
 
 (progn
   (defun process-input-message (client-id message-table)
@@ -53,6 +52,14 @@
           (gethash :y message-table))))))
 
   (register-message-processor 'input-processor #'process-input-message))
+
+(progn
+  (defun process-on-disconnecting (client-id)
+    (print (hash-table-count *client-input-info-table*))
+    (delete-client-info client-id)
+    (print (hash-table-count *client-input-info-table*)))
+
+  (register-callback-on-disconnecting 'input-callback #'process-on-disconnecting))
 
 (defun update-input ()
   ;; keyboard
@@ -113,6 +120,9 @@
         info
         (setf (gethash client-id *client-input-info-table*)
               (make-client-input-info)))))
+
+(defun delete-client-info (client-id)
+  (remhash client-id *client-input-info-table*))
 
 (defun set-raw-key-state (client-id key down-p)
   (setf (gethash key

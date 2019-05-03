@@ -3,6 +3,8 @@
   (:export :*ws-app*
            :send-from-server
            :register-message-processor
+           :register-callback-on-connecting
+           :register-callback-on-disconnecting
            :get-client-id-list
            :*target-client-id-list*)
   (:import-from :jonathan
@@ -35,7 +37,24 @@ Otherwise, it is sent to the listed clients.")
 (defvar *message-processor-table* (make-hash-table))
 
 (defun register-message-processor (id-as-symbol callback)
+  "The callback should take 2 arguments.
+The first is an id of client.
+The second is a message represented as a hash table."
   (setf (gethash id-as-symbol *message-processor-table*) callback))
+
+(defvar *callback-on-connecting-table* (make-hash-table))
+
+(defun register-callback-on-connecting (id-as-symbol callback)
+  "The callback should take 1 argument.
+The first is an id of client"
+  (setf (gethash id-as-symbol *callback-on-connecting-table*) callback))
+
+(defvar *callback-on-disconnecting-table* (make-hash-table))
+
+(defun register-callback-on-disconnecting (id-as-symbol callback)
+  "The callback should take 1 argument.
+The first is an id of client"
+  (setf (gethash id-as-symbol *callback-on-disconnecting-table*) callback))
 
 (defparameter *ws-app*
   (lambda (env)
@@ -43,6 +62,10 @@ Otherwise, it is sent to the listed clients.")
            (client-info (make-client-info :target-server server))
            (client-id (client-info-id client-info)))
       (push client-info *client-info-list*)
+      (maphash (lambda (key callback)
+                 (declare (ignore key))
+                 (funcall callback client-id))
+               *callback-on-connecting-table*)
       (on :message server
           (lambda (json-string)
             (let ((temp-table (parse json-string :as :hash-table))
@@ -52,8 +75,8 @@ Otherwise, it is sent to the listed clients.")
                                         parsed-table)
                                value))
                        temp-table)
-              (maphash (lambda (id callback)
-                         (declare (ignore id))
+              (maphash (lambda (key callback)
+                         (declare (ignore key))
                          (funcall callback client-id parsed-table))
                        *message-processor-table*))))
       (lambda (responder)
@@ -70,6 +93,10 @@ Otherwise, it is sent to the listed clients.")
                          (find id *target-client-id-list*))
                  (send server message)))
         (:closed (format t "~&Connection closed: ~D" id)
-                 (setf *client-info-list* (remove client-info *client-info-list*)))
+                 (setf *client-info-list* (remove client-info *client-info-list*))
+                 (maphash (lambda (key callback)
+                            (declare (ignore key))
+                            (funcall callback id))
+                          *callback-on-disconnecting-table*))
         ;; otherwise do nothing
         ))))
