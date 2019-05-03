@@ -25,7 +25,7 @@
                             "js/client.js"
                             (asdf:component-pathname
                              (asdf:find-system :proto-cl-client-side-rendering)))
-           :string-url "/ws")
+           :web-socket-url "/ws")
           *static-app*)
          :port port)))
 

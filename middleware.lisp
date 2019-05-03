@@ -7,11 +7,11 @@
                 :output-client-js))
 (in-package :proto-cl-client-side-rendering/middleware)
 
-(defun make-client-side-rendering-middleware (&key client-js-path string-url)
+(defun make-client-side-rendering-middleware (&key client-js-path web-socket-url)
   (lambda (app)
     (lambda (env)
       (output-client-js client-js-path)
       (let ((uri (getf env :request-uri)))
-        (if (string= uri string-url)
+        (if (string= uri web-socket-url)
             (funcall *ws-app* env)
             (funcall app env))))))
