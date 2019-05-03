@@ -16,6 +16,7 @@
   :defsystem-depends-on (:asdf-package-system)
   :license "MIT"
   :depends-on (:cl-markup
+               :ningle
                :proto-cl-client-side-rendering
                :sample-proto-cl-client-side-rendering/main)
   :description "A sample of Client side rendering in Common Lisp")
