@@ -21,12 +21,11 @@
         (clack:clackup
          (lack:builder
           (make-client-side-rendering-middleware
-           :client-js-path (merge-pathnames
-                            "js/client.js"
-                            (asdf:component-pathname
-                             (asdf:find-system :proto-cl-client-side-rendering)))
-           :web-socket-url "/ws")
-          *static-app*)
+           :resource-root (merge-pathnames
+                           "resource/"
+                           (asdf:component-pathname
+                            (asdf:find-system :sample-proto-cl-client-side-rendering))))
+          *ningle-app*)
          :port port)))
 
 (defun stop ()
@@ -56,13 +55,3 @@
                                      :cols 80 :rows 10 :readonly t :disabled t nil))
                     (:div :id "renderer" nil)
                     (:script :src "js/client.js" nil)))))))
-
-(defvar *static-app*
-  (lack:builder
-   (:static :path (lambda (path)
-                    (if (ppcre:scan "^(?:/js/)" path)
-                        path
-                        nil))
-            :root (asdf:component-pathname
-                   (asdf:find-system :proto-cl-client-side-rendering)))
-   *ningle-app*))

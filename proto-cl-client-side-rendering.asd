@@ -19,6 +19,7 @@
                :websocket-driver-client
                :alexandria
                :bordeaux-threads
+               :lack-middleware-static
                :clack
                :dexador
                :cl-markup
