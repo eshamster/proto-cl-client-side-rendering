@@ -55,9 +55,7 @@
 
 (progn
   (defun process-on-disconnecting (client-id)
-    (print (hash-table-count *client-input-info-table*))
-    (delete-client-info client-id)
-    (print (hash-table-count *client-input-info-table*)))
+    (delete-client-info client-id))
 
   (register-callback-on-disconnecting 'input-callback #'process-on-disconnecting))
 
