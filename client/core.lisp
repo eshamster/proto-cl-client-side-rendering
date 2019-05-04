@@ -121,7 +121,6 @@
 (defun.ps+ update-draw (scene)
   (let ((draw-commands (dequeue-draw-commands)))
     (when draw-commands
-      (clear-scene scene)
       (dolist (command draw-commands)
         (interpret-draw-command scene command)))))
 

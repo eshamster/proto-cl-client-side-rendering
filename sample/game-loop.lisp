@@ -53,8 +53,13 @@
                :width 20 :height 40
                :rotate (* -1/5 *temp-counter*)
                :color #xff00ff)
+    (draw-rect :id (incf id)
+               :x 600 :y 300
+               :depth 0 :fill-p nil
+               :width 20 :height (+ 40 (* 20 (sin (/ *temp-counter* 2))))
+               :rotate 0
+               :color #xff00ff)
     ;; (log-console :message "test") ; try logging
-    ;; try keyboard
     (try-keyboard)
     (try-mouse)
     (draw-circle :id (incf id)

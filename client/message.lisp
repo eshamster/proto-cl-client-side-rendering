@@ -20,6 +20,7 @@
   (:import-from :ps-experiment
                 :defvar.ps
                 :defvar.ps+
+                :defstruct.ps+
                 :defun.ps
                 :defun.ps+
                 :enable-ps-experiment-syntax))
@@ -87,9 +88,25 @@
 (defun.ps interpret-log-console (command)
   (console.log (@ command :data :message)))
 
-;; TODO: The following should move to another package
+;; TODO: The followings should be moved to another package
 
-(defun.ps interpret-draw-command (scene command)
+(defstruct.ps+ draw-info
+  kind
+  data ; hash table
+  mesh)
+
+(defvar.ps+ *draw-info-table* (make-hash-table)
+  "Key: id, Value: draw-info")
+
+(defun.ps update-common-mesh-params (mesh data-table)
+  (mesh.position.set (gethash :x data-table)
+                     (gethash :y data-table)
+                     (gethash :depth data-table))
+  (let ((rotate (gethash :rotate data-table)))
+    (when rotate
+      (setf mesh.rotation.z rotate))))
+
+(defun.ps make-mesh-by-command (command)
   (let* ((kind (code-to-name (gethash :kind command)))
          (data (gethash :data command))
          (mesh (ecase kind
@@ -107,10 +124,53 @@
                       (make-wired-rect :width (gethash :width data)
                                        :height (gethash :height data)
                                        :color (gethash :color data)))))))
-    (mesh.position.set (gethash :x data)
-                       (gethash :y data)
-                       (gethash :depth data))
-    (let ((rotate (gethash :rotate data)))
-      (when rotate
-        (setf mesh.rotation.z rotate)))
-    (scene.add mesh)))
+    (update-common-mesh-params mesh data)
+    mesh))
+
+(defun.ps add-mesh-to-scene (scene mesh)
+  (scene.add mesh))
+
+(defun.ps remove-mesh-from-scene (scene mesh)
+  (scene.remove mesh))
+
+;; Note: change of color can be achieved without recreating mesh.
+;;       But currently recreate for easy of programming.
+(defun.ps+ should-recreate-p (prev-info new-kind new-data)
+  (let ((prev-kind (draw-info-kind prev-info))
+        (prev-data (draw-info-data prev-info)))
+    (flet ((eq-params (&rest key-list)
+             (every (lambda (key)
+                      (= (gethash key prev-data)
+                         (gethash key new-data)))
+                    key-list)))
+      (or (not (eq prev-kind new-kind))
+          (case new-kind
+            (:draw-circle
+             (not (eq-params :fill-p :color :r)))
+            (:draw-rect
+             (not (eq-params :fill-p :color :width :height)))
+            (t t))))))
+
+(defun.ps+ add-or-update-mesh (scene command)
+  (let* ((kind (code-to-name (gethash :kind command)))
+         (data (gethash :data command))
+         (id (gethash :id data))
+         (prev-info (gethash id *draw-info-table*)))
+    (cond ((null prev-info) ; add
+           (let* ((mesh (make-mesh-by-command command)))
+             (setf (gethash id *draw-info-table*)
+                   (make-draw-info :kind kind
+                                   :data data
+                                   :mesh mesh))
+             (add-mesh-to-scene scene mesh)))
+          ((should-recreate-p prev-info kind data) ; recreate
+           (remhash id *draw-info-table*)
+           (remove-mesh-from-scene scene (draw-info-mesh prev-info))
+           (add-or-update-mesh scene command))
+          (t ; simple update
+           (update-common-mesh-params
+            (draw-info-mesh prev-info) data)
+           (setf (draw-info-data prev-info) data)))))
+
+(defun.ps+ interpret-draw-command (scene command)
+  (add-or-update-mesh scene command))
