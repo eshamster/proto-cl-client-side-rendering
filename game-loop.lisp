@@ -9,6 +9,7 @@
                 :update-input)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :send-frame-start
+                :send-delete-draw-object
                 :send-draw-rect
                 :send-draw-circle
                 :send-log-console
@@ -70,6 +71,17 @@
                 (draw-info-sender draw-info)
                 (draw-info-param-table draw-info))))
            *draw-info-table*)
+  ;; XXX: Should ensure delete messages are sent to all clients
+  (maphash (lambda (id draw-info)
+             (declare (ignore draw-info))
+             (multiple-value-bind (value found)
+                 (gethash id *draw-info-table*)
+               (declare (ignore value))
+               (unless found
+                 (send-delete-draw-object
+                  *current-frame* (incf *index-in-frame*)
+                  :id id))))
+           *prev-draw-info-table*)
   (switch-draw-info-table))
 
 (defun switch-draw-info-table ()

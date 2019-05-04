@@ -4,6 +4,7 @@
            :name-to-code
            :send-frame-start
            :send-frame-end
+           :send-delete-draw-object
            :send-draw-rect
            :send-draw-circle
            :send-log-console
@@ -29,6 +30,7 @@
   (dolist (pair '(;  server to client
                   (0 :frame-start)
                   (1 :frame-end)
+                  (10 :delete-draw-object)
                   (11 :draw-rect)
                   (12 :draw-circle)
                   (21 :log-console)
@@ -58,7 +60,7 @@
   (let ((target-name (code-to-name code)))
     (some (lambda (name)
             (eq name target-name))
-          '(:draw-rect :draw-circle))))
+          '(:delete-draw-object :draw-rect :draw-circle))))
 
 (defun.ps+ bool-to-number (bool)
   (if bool 1 0))
@@ -100,6 +102,10 @@
   (send-message :frame-end frame index-in-frame '()))
 
 ;; - draw - ;;
+
+(defun send-delete-draw-object (frame index-in-frame &key id)
+  (send-message :delete-draw-object frame index-in-frame
+                `(:id ,id)))
 
 (defun send-draw-message (kind-name frame index-in-frame data
                           &key id x y depth color)

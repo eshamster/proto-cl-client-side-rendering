@@ -156,7 +156,10 @@
          (data (gethash :data command))
          (id (gethash :id data))
          (prev-info (gethash id *draw-info-table*)))
-    (cond ((null prev-info) ; add
+    (cond ((eq kind :delete-draw-object) ; delete
+           (remhash id *draw-info-table*)
+           (remove-mesh-from-scene scene (draw-info-mesh prev-info)))
+          ((null prev-info) ; add
            (let* ((mesh (make-mesh-by-command command)))
              (setf (gethash id *draw-info-table*)
                    (make-draw-info :kind kind
