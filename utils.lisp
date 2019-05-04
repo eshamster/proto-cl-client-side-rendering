@@ -8,7 +8,10 @@
   '("https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.js"))
 
 (defparameter *js-pairs*
-  '(("threex.keyboardstate.js" . "https://raw.githubusercontent.com/jeromeetienne/threex.keyboardstate/51fd77fdd87eeed064db643693d393cf21afa45d/threex.keyboardstate.js")))
+  '(
+    ;; Currently, not used, but remains code for reference.
+    ;; ("threex.keyboardstate.js" . "https://raw.githubusercontent.com/jeromeetienne/threex.keyboardstate/51fd77fdd87eeed064db643693d393cf21afa45d/threex.keyboardstate.js")
+    ))
 
 (defun ensure-js-files (dir)
   (ensure-directories-exist dir)

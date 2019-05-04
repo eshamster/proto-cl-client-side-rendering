@@ -4,10 +4,13 @@
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :*ws-app*)
   (:import-from :proto-cl-client-side-rendering/client/core
-                :output-client-js))
+                :output-client-js)
+  (:import-from :proto-cl-client-side-rendering/utils
+                :ensure-js-files))
 (in-package :proto-cl-client-side-rendering/middleware)
 
 (defun make-client-side-rendering-middleware (&key resource-root)
+  (ensure-js-files  (merge-pathnames "js/" resource-root))
   (lambda (app)
     (lambda (env)
       (output-client-js (merge-pathnames "js/client.js" resource-root))
