@@ -24,15 +24,16 @@
 
 (progn
   (defun process-input-message (client-id message-table)
-    (let ((kind (code-to-name (gethash :kind message-table))))
+    (let ((kind (code-to-name (gethash :kind message-table)))
+          (data (gethash :data message-table)))
       (case kind
         ((:key-down :key-up)
          (set-raw-key-state client-id
                             (make-keyword
-                             (string-upcase (gethash :key message-table)))
+                             (string-upcase (gethash :key data)))
                             (eq kind :key-down)))
         ((:mouse-down :mouse-up)
-         (let ((raw-button (gethash :button message-table)))
+         (let ((raw-button (gethash :button data)))
            ;; If raw-button is not string, the button is not implemented yet.
            (when (stringp raw-button)
              (let* ((button (make-keyword (string-upcase raw-button)))
@@ -43,13 +44,13 @@
                                     (eq kind :mouse-down))))))
          (update-mouse-pos-buffer
           client-id
-          (gethash :x message-table)
-          (gethash :y message-table)))
+          (gethash :x data)
+          (gethash :y data)))
         (:mouse-move
          (update-mouse-pos-buffer
           client-id
-          (gethash :x message-table)
-          (gethash :y message-table))))))
+          (gethash :x data)
+          (gethash :y data))))))
 
   (register-message-processor 'input-processor #'process-input-message))
 

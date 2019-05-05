@@ -40,13 +40,15 @@
   (let ((key e.key))
     (unless (gethash key *key-down-table*)
       (send-json-to-server (ps:create :kind (name-to-code :key-down)
-                                      :key (adjust-key-name key)))
+                                      :data (ps:create
+                                             :key (adjust-key-name key))))
       (setf (gethash key *key-down-table*) t))))
 
 (defun.ps on-keyup (e)
   (let ((key e.key))
     (send-json-to-server (ps:create :kind (name-to-code :key-up)
-                                    :key (adjust-key-name key)))
+                                    :data (ps:create
+                                           :key (adjust-key-name key))))
     (setf (gethash key *key-down-table*) nil)))
 
 ;; - mouse - ;;
@@ -69,9 +71,10 @@
   (multiple-value-bind (x y)
       (calc-adjusted-input-point e.client-x e.client-y))
   (send-json-to-server (ps:create :kind (name-to-code kind)
-                                  :button (mouse-button-to-string e.button)
-                                  :x x
-                                  :y y)))
+                                  :data (ps:create
+                                         :button (mouse-button-to-string e.button)
+                                         :x x
+                                         :y y))))
 
 (defun.ps+ on-mousedown (e)
   (send-mouse-message :mouse-down e))
