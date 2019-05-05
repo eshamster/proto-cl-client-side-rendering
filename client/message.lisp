@@ -28,7 +28,7 @@
 
 (enable-ps-experiment-syntax)
 
-(defvar.ps+ *frame-json-cache* (list)) ; per frame
+(defvar.ps+ *frame-json-buffer* (list)) ; per frame
 
 (defvar.ps+ *draw-command-buffer* (list)) ; per frame
 (defvar.ps+ *draw-command-queue* (list))  ; frames
@@ -43,8 +43,8 @@
 (defun.ps dequeue-draw-commands ()
   (*draw-command-queue*.pop))
 
-(defun.ps push-message-to-cach (parsed-message)
-  (*frame-json-cache*.push parsed-message))
+(defun.ps push-message-to-buffer (parsed-message)
+  (*frame-json-buffer*.push parsed-message))
 
 ;; debug
 (defun.ps print-message-stat (message-stat)
@@ -61,10 +61,10 @@
 
 (defun.ps+ process-message (message)
   (let ((parsed-message (receiving-to-json message)))
-    (push-message-to-cach parsed-message)
+    (push-message-to-buffer parsed-message)
     (when (target-kind-p :frame-end parsed-message)
       (let ((message-stat (make-hash-table)))
-        (dolist (parsed *frame-json-cache*)
+        (dolist (parsed *frame-json-buffer*)
           (let ((kind-code (gethash :kind parsed)))
             (symbol-macrolet ((count (gethash kind-code message-stat)))
               (unless count
@@ -76,7 +76,7 @@
                    (push-draw-command-to-buffer parsed)))))
         (print-message-stat message-stat))
       (queue-draw-commands-in-buffer)
-      (setf *frame-json-cache* (list)))))
+      (setf *frame-json-buffer* (list)))))
 
 (defun.ps+ target-kind-p (kind parsed-message)
   (eq (gethash :kind parsed-message)
