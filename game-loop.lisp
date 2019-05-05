@@ -16,7 +16,8 @@
                 :send-frame-end)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server
-                :*target-client-id-list*)
+                :*target-client-id-list*
+                :register-callback-on-connecting)
   (:import-from :alexandria
                 :make-keyword)
   (:import-from :bordeaux-threads
@@ -47,6 +48,7 @@
                                    (funcall update-func)
                                    (process-all-draw-messages))
                               (send-frame-end *current-frame* (incf *index-in-frame*)))
+                            (update-new-client-list)
                             (sleep 0.5))))))
 
 (defun stop-game-loop ()
@@ -54,6 +56,20 @@
   (when *loop-thread*
     (join-thread *loop-thread*)
     (setf *loop-thread* nil)))
+
+;; --- new client list --- ;;
+
+(defvar *new-client-list-buffer* nil)
+(defvar *new-client-list* nil)
+
+(defun update-new-client-list ()
+  ;; TODO: lock list
+  (setf *new-client-list* *new-client-list-buffer*
+        *new-client-list-buffer* nil))
+
+(register-callback-on-connecting
+ 'add-new-client-list-to-buffer
+ (lambda (client-id) (push client-id *new-client-list-buffer*)))
 
 ;; --- draw information manager --- ;;
 
@@ -63,10 +79,44 @@
   "Key: id, Value: draw-info")
 (defvar *prev-draw-info-table* (make-hash-table))
 
+(defun same-param-table-p (table1 table2)
+  ;; Note: Assume that two tables have same keys and
+  (maphash (lambda (key value)
+             (unless (equalp value (gethash key table2))
+               (return-from same-param-table-p nil)))
+           table1)
+  t)
+
+(defun same-draw-info-p (info1 info2)
+  (and (eq (draw-info-sender info1)
+           (draw-info-sender info2))
+       ;; FIXME: Assume client-id-list never be changed
+       ;;        (but adding new client can be detected)
+       (same-param-table-p (draw-info-param-table info1)
+                           (draw-info-param-table info2))))
+
+(defun calc-common-target (default-id-list new-client-id-list)
+  (if (listp default-id-list)
+      (remove-if (lambda (id)
+                   (not (find id default-id-list)))
+                 new-client-id-list)
+      new-client-id-list ; The default list is ":all"
+      ))
+
+(defun calc-target-client-id-list (object-id)
+  (let ((info (gethash object-id *draw-info-table*))
+        (prev-info (gethash object-id *prev-draw-info-table*)))
+    (let ((list-in-info (draw-info-client-id-list info)))
+      (cond ((null prev-info) list-in-info)
+            ((same-draw-info-p info prev-info)
+             (if *new-client-list*
+                 (calc-common-target list-in-info *new-client-list*)
+                 nil))
+            (t list-in-info)))))
+
 (defun process-all-draw-messages ()
   (maphash (lambda (id draw-info)
-             (declare (ignore id))
-             (let ((*target-client-id-list* (draw-info-client-id-list draw-info)))
+             (let ((*target-client-id-list* (calc-target-client-id-list id)))
                (call-sender-by-param-table
                 (draw-info-sender draw-info)
                 (draw-info-param-table draw-info))))
