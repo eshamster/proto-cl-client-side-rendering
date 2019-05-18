@@ -23,6 +23,11 @@
            :mouse-up-now-p
            :mouse-up-p
            :get-mouse-pos
+           :touch-summary-down-now-p
+           :touch-summary-down-p
+           :touch-summary-up-now-p
+           :touch-summary-up-p
+           :get-touch-summary-pos
            ;; middleware
            :make-client-side-rendering-middleware
            ;; protocol
