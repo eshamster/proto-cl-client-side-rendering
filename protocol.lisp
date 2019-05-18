@@ -39,7 +39,12 @@
                   (-2 :key-up)
                   (-11 :mouse-down)
                   (-12 :mouse-up)
-                  (-13 :mouse-move)))
+                  (-13 :mouse-move)
+                  (-21 :touch-start)
+                  (-22 :touch-end)
+                  (-23 :touch-move)
+                  (-24 :touch-cancel) ; not implemented
+                  ))
     (let ((code (car pair))
           (name (cadr pair)))
       (setf (gethash code *code-to-name-table*) name

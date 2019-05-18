@@ -50,7 +50,10 @@
          (update-mouse-pos-buffer
           client-id
           (gethash :x data)
-          (gethash :y data))))))
+          (gethash :y data)))
+        ((:touch-start :touch-end :touch-move)
+         (print-nested-hash-table message-table))
+        (t (print-nested-hash-table message-table)))))
 
   (register-message-processor 'input-processor #'process-input-message))
 
@@ -193,3 +196,8 @@
   (if (down-p row-count) row-count 0))
 (defun get-up-count (row-count)
   (if (up-p row-count) (* -1 row-count) 0))
+
+;; For debug when implementing a new event.
+(defun print-nested-hash-table (table)
+  (format t "~&-----------~%~A" (code-to-name (gethash :kind table)))
+  (print (jonathan:parse (jonathan:to-json table))))

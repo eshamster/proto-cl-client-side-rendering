@@ -22,7 +22,10 @@
   (window.add-event-listener "keyup" on-keyup)
   (window.add-event-listener "mouseup" on-mouseup)
   (window.add-event-listener "mousedown" on-mousedown)
-  (window.add-event-listener "mousemove" on-mousemove))
+  (window.add-event-listener "mousemove" on-mousemove)
+  (window.add-event-listener "touchstart" on-touchstart)
+  (window.add-event-listener "touchend" on-touchend)
+  (window.add-event-listener "touchmove" on-touchmove))
 
 ;; --- internal --- ;;
 
@@ -69,12 +72,12 @@
 
 (defun.ps send-mouse-message (kind e)
   (multiple-value-bind (x y)
-      (calc-adjusted-input-point e.client-x e.client-y))
-  (send-json-to-server (ps:create :kind (name-to-code kind)
-                                  :data (ps:create
-                                         :button (mouse-button-to-string e.button)
-                                         :x x
-                                         :y y))))
+      (calc-adjusted-input-point e.client-x e.client-y)
+    (send-json-to-server (ps:create :kind (name-to-code kind)
+                                    :data (ps:create
+                                           :button (mouse-button-to-string e.button)
+                                           :x x
+                                           :y y)))))
 
 (defun.ps+ on-mousedown (e)
   (send-mouse-message :mouse-down e))
@@ -84,3 +87,26 @@
 
 (defun.ps on-mousemove (e)
   (send-mouse-message :mouse-move e))
+
+;; - touch - ;;
+
+(defun.ps send-touch-message (kind e)
+  (let ((touches
+         (loop :for i :from 0 :below e.changed-touches.length
+            :collect
+              (let ((touch (nth 0 e.changed-touches)))
+                (multiple-value-bind (x y)
+                    (calc-adjusted-input-point (ps:@ touch client-x)
+                                               (ps:@ touch client-y))
+                  (ps:create :id touch.identifier :x x :y y))))))
+    (send-json-to-server (ps:create :kind (name-to-code kind)
+                                    :data touches))))
+
+(defun.ps+ on-touchstart (e)
+  (send-touch-message :touch-start e))
+
+(defun.ps+ on-touchend (e)
+  (send-touch-message :touch-end e))
+
+(defun.ps on-touchmove (e)
+  (send-touch-message :touch-move e))
