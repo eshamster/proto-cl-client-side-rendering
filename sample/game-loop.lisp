@@ -13,7 +13,9 @@
                 :*target-client-id-list*
                 :key-down-p
                 :mouse-down-p
-                :get-mouse-pos))
+                :get-mouse-pos
+                :touch-summary-down-p
+                :get-touch-summary-pos))
 (in-package :sample-proto-cl-client-side-rendering/game-loop)
 
 (defun start-sample-game-loop ()
@@ -62,6 +64,7 @@
     ;; (log-console :message "test") ; try logging
     (try-keyboard)
     (try-mouse)
+    (try-touch)
     (draw-circle :id (incf id)
                  :x *temp-x* :y *temp-y*
                  :depth 10 :fill-p t
@@ -95,5 +98,13 @@
   (dolist (client-id (get-client-id-list))
     (when (mouse-down-p client-id :left)
       (multiple-value-bind (x y) (get-mouse-pos client-id)
+        (setf *temp-x* x
+              *temp-y* y)))))
+
+(defun try-touch ()
+  (dolist (client-id (get-client-id-list))
+    (when (touch-summary-down-p client-id)
+      (multiple-value-bind (x y) (get-touch-summary-pos client-id)
+        (assert (and x y))
         (setf *temp-x* x
               *temp-y* y)))))

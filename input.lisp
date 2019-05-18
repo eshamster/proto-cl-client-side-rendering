@@ -11,7 +11,13 @@
            :mouse-down-p
            :mouse-up-now-p
            :mouse-up-p
-           :get-mouse-pos)
+           :get-mouse-pos
+
+           :touch-summary-down-now-p
+           :touch-summary-down-p
+           :touch-summary-up-now-p
+           :touch-summary-up-p
+           :get-touch-summary-pos)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :name-to-code
                 :code-to-name)
@@ -52,14 +58,15 @@
           (gethash :x data)
           (gethash :y data)))
         ((:touch-start :touch-end :touch-move)
-         (print-nested-hash-table message-table))
+         (update-touch-info-by-event client-id kind data))
         (t (print-nested-hash-table message-table)))))
 
   (register-message-processor 'input-processor #'process-input-message))
 
 (progn
   (defun process-on-disconnecting (client-id)
-    (delete-client-info client-id))
+    (delete-client-info client-id)
+    (delete-touch-info client-id))
 
   (register-callback-on-disconnecting 'input-callback #'process-on-disconnecting))
 
@@ -77,7 +84,9 @@
                         key-down-p-table)))
            *client-input-info-table*)
   ;; mouse
-  (update-mouse-pos))
+  (update-mouse-pos)
+  ;; touch
+  (update-touch-info))
 
 ;; - keyboard - ;;
 
@@ -105,6 +114,41 @@
   "Returns (value x y)"
   (let ((pos (gethash client-id *mouse-pos-table*)))
     (values (mouse-pos-x pos) (mouse-pos-y pos))))
+
+;; - touch - ;;
+
+;; TODO: Define functions to get information of each touch.
+
+(defun touch-summary-down-now-p (client-id)
+  "Do one or more touches exist from this frame?"
+  (let ((state (get-touch-state-summary client-id)))
+    (or (eq state :down-now))))
+(defun touch-summary-down-p (client-id)
+  "Do one or more touches exist?"
+  (let ((state (get-touch-state-summary client-id)))
+    (or (eq state :down-now) (eq state :down))))
+(defun touch-summary-up-now-p (client-id)
+  "Do no touches exist from this frame?"
+  (let ((state (get-touch-state-summary client-id)))
+    (or (eq state :up-now))))
+(defun touch-summary-up-p (client-id)
+  "Do no touches exist?"
+  (let ((state (get-touch-state-summary client-id)))
+    (or (eq state :up-now) (eq state :up))))
+
+(defun get-touch-summary-pos (client-id)
+  "Return average point of all touches as (values x y).
+If no touches exist, return nil"
+  (let ((info-list (gethash client-id *touch-info-table*)))
+    (unless info-list
+      (return-from get-touch-summary-pos nil))
+    (let ((sum-x 0)
+          (sum-y 0)
+          (num (length info-list)))
+      (dolist (info info-list)
+        (incf sum-x (touch-info-x info))
+        (incf sum-y (touch-info-y info)))
+      (values (/ sum-x num) (/ sum-y num)))))
 
 ;; --- internal --- ;;
 
@@ -165,6 +209,90 @@
                (setf x x-buffer
                      y y-buffer)))
            *mouse-pos-table*))
+
+;; - touch - ;;
+
+(defvar *latest-touch-id* 0)
+
+(defstruct touch-info
+  (id (incf *latest-touch-id*))
+  raw-id
+  x y x-buffer y-buffer
+  (down-p t)
+  (count 0))
+
+(defvar *touch-info-table* (make-hash-table)
+  "Key: client id, Value list of touch-info")
+
+(defun update-touch-info-by-event (client-id kind data-table-list)
+  (let ((info-list (gethash client-id *touch-info-table* (list))))
+    (dolist (data-table data-table-list)
+      (let ((x (gethash :x data-table))
+            (y (gethash :y data-table))
+            (raw-id (gethash :id data-table)))
+        (flet ((get-info ()
+                 (find raw-id info-list
+                       :key (lambda (info) (touch-info-raw-id info)))))
+          (ecase kind
+            (:touch-start
+             ;; FIXME: Should prevent from getting new touch info until next frame.
+             (push (make-touch-info :raw-id raw-id
+                                    :x x :x-buffer x
+                                    :y y :y-buffer y)
+                   info-list))
+            (:touch-end
+             (let ((info (get-info)))
+               (setf (touch-info-raw-id info) nil
+                     (touch-info-x-buffer info) x
+                     (touch-info-y-buffer info) y
+                     (touch-info-down-p info) nil)))
+            (:touch-move
+             (let ((info (get-info)))
+               (setf (touch-info-x-buffer info) x
+                     (touch-info-y-buffer info) y)))))))
+    (setf (gethash client-id *touch-info-table*) info-list)))
+
+(defun update-touch-info ()
+  (maphash (lambda (client-id info-list)
+             (dolist (info info-list)
+               (with-slots (x y x-buffer y-buffer
+                              count down-p) info
+                 (setf x x-buffer
+                       y y-buffer
+                       count (calc-next-input-count count down-p))))
+             (setf (gethash client-id *touch-info-table*)
+                   (remove-if (lambda (info)
+                                (let ((count (touch-info-count info)))
+                                  (and (not (up-now-p count))
+                                       (up-p count))))
+                              info-list)))
+           *touch-info-table*))
+
+(defun delete-touch-info (client-id)
+  (remhash client-id *touch-info-table*))
+
+(defun get-touch-state (client-id touch-id)
+  (let* ((info-list (gethash client-id *touch-info-table* (list)))
+         (info (find touch-id info-list :key #'touch-info-id)))
+    (unless info
+      (return-from get-touch-state :up))
+    (get-input-state (touch-info-count info))))
+
+(defun get-touch-state-summary (client-id)
+  (let* ((info-list (gethash client-id *touch-info-table* (list)))
+         (state-list (mapcar (lambda (info)
+                               (get-input-state (touch-info-count info)))
+                             info-list)))
+    (case (length state-list)
+      (0 :up)
+      (1 (car state-list))
+      (t (flet ((some-state (target-state)
+                  (some (lambda (state) (eq state target-state))
+                        state-list)))
+           (cond ((some-state :down) :down)
+                 ((some-state :down-now) :down-now)
+                 ((some-state :up-now) :up-now)
+                 (t :up)))))))
 
 ;; - utils - ;;
 
