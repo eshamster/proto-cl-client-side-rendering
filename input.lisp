@@ -65,7 +65,8 @@
 
 (progn
   (defun process-on-disconnecting (client-id)
-    (delete-client-info client-id)
+    (delete-keyboard-info client-id)
+    (delete-mouse-info client-id)
     (delete-touch-info client-id))
 
   (register-callback-on-disconnecting 'input-callback #'process-on-disconnecting))
@@ -167,7 +168,7 @@ If no touches exist, return nil"
         (setf (gethash client-id *client-input-info-table*)
               (make-client-input-info)))))
 
-(defun delete-client-info (client-id)
+(defun delete-keyboard-info (client-id)
   (remhash client-id *client-input-info-table*))
 
 (defun set-raw-key-state (client-id key down-p)
@@ -209,6 +210,9 @@ If no touches exist, return nil"
                (setf x x-buffer
                      y y-buffer)))
            *mouse-pos-table*))
+
+(defun delete-mouse-info (client-id)
+  (remhash client-id *mouse-pos-table*))
 
 ;; - touch - ;;
 
