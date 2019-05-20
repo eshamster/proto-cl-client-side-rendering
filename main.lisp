@@ -37,4 +37,6 @@
            :make-src-list-for-script-tag
            ;; ws-server
            :get-client-id-list
-           :*target-client-id-list*))
+           :*target-client-id-list*
+           :register-callback-on-connecting
+           :register-callback-on-disconnecting))
