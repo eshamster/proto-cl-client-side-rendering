@@ -4,6 +4,7 @@
            :stop-game-loop
            :draw-rect
            :draw-circle
+           :draw-line
            :log-console)
   (:import-from :proto-cl-client-side-rendering/input
                 :update-input)
@@ -12,6 +13,7 @@
                 :send-delete-draw-object
                 :send-draw-rect
                 :send-draw-circle
+                :send-draw-line
                 :send-log-console
                 :send-frame-end)
   (:import-from :proto-cl-client-side-rendering/ws-server
@@ -172,6 +174,13 @@
         (make-draw-info :sender #'send-draw-rect
                         :param-table (init-table-by-params
                                       id x y depth color fill-p width height rotate)
+                        :client-id-list *target-client-id-list*)))
+
+(defun draw-line (&key id x1 y1 x2 y2 depth color)
+  (setf (gethash id *draw-info-table*)
+        (make-draw-info :sender #'send-draw-line
+                        :param-table (init-table-by-params
+                                      id x1 y1 x2 y2 depth color)
                         :client-id-list *target-client-id-list*)))
 
 (defun log-console (&key message)

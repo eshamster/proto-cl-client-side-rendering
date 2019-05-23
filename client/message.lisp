@@ -7,7 +7,8 @@
                 :make-solid-rect
                 :make-wired-rect
                 :make-solid-circle
-                :make-wired-circle)
+                :make-wired-circle
+                :make-line)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name
                 :name-to-code
@@ -123,7 +124,13 @@
                                        :color (gethash :color data))
                       (make-wired-rect :width (gethash :width data)
                                        :height (gethash :height data)
-                                       :color (gethash :color data)))))))
+                                       :color (gethash :color data))))
+                 (:draw-line
+                  (make-line :pos-a (list (gethash :x1 data)
+                                          (gethash :y1 data))
+                             :pos-b (list (gethash :x2 data)
+                                          (gethash :y2 data))
+                             :color (gethash :color data))))))
     (update-common-mesh-params mesh data)
     mesh))
 

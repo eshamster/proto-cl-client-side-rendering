@@ -12,6 +12,7 @@
            :stop-game-loop
            :draw-rect
            :draw-circle
+           :draw-line
            :log-console
            ;; input
            :key-down-now-p

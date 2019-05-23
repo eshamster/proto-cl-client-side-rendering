@@ -7,6 +7,7 @@
                 :stop-game-loop
                 :draw-rect
                 :draw-circle
+                :draw-line
                 :log-console
 
                 :get-client-id-list
@@ -69,6 +70,11 @@
                  :x *temp-x* :y *temp-y*
                  :depth 10 :fill-p t
                  :r 50 :color #xffffff)
+    (draw-line :id (incf id)
+               :x1 20 :y1 30
+               :x2 500 :y2 60
+               :depth -10
+               :color #x00ffff)
     ;; try sending to each client
     (flet ((try-send (y color)
              (draw-circle :id (incf id)
