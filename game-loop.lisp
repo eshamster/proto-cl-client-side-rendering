@@ -75,7 +75,10 @@
 
 ;; --- draw information manager --- ;;
 
-(defstruct draw-info sender client-id-list param-table)
+(defstruct draw-info
+  sender
+  (client-id-list *target-client-id-list*)
+  param-table)
 
 (defvar *draw-info-table* (make-hash-table)
   "Key: id, Value: draw-info")
@@ -166,22 +169,19 @@
   (setf (gethash id *draw-info-table*)
         (make-draw-info :sender #'send-draw-circle
                         :param-table (init-table-by-params
-                                      id x y depth color fill-p r)
-                        :client-id-list *target-client-id-list*)))
+                                      id x y depth color fill-p r))))
 
 (defun draw-rect (&key id x y depth color fill-p width height rotate)
   (setf (gethash id *draw-info-table*)
         (make-draw-info :sender #'send-draw-rect
                         :param-table (init-table-by-params
-                                      id x y depth color fill-p width height rotate)
-                        :client-id-list *target-client-id-list*)))
+                                      id x y depth color fill-p width height rotate))))
 
 (defun draw-line (&key id x1 y1 x2 y2 depth color)
   (setf (gethash id *draw-info-table*)
         (make-draw-info :sender #'send-draw-line
                         :param-table (init-table-by-params
-                                      id x1 y1 x2 y2 depth color)
-                        :client-id-list *target-client-id-list*)))
+                                      id x1 y1 x2 y2 depth color))))
 
 (defun log-console (&key message)
   (send-log-console *current-frame* (incf *index-in-frame*)
