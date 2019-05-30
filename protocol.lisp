@@ -8,6 +8,7 @@
            :send-draw-rect
            :send-draw-circle
            :send-draw-line
+           :send-draw-arc
            :send-log-console
            :draw-code-p
            :bool-to-number
@@ -34,8 +35,9 @@
                   (10 :delete-draw-object)
                   (11 :draw-rect)
                   (12 :draw-circle)
-                  (13 :draw-line)
-                  (21 :log-console)
+                  (13 :draw-arc)
+                  (15 :draw-line)
+                  (101 :log-console)
                   ;; client to server
                   (-1 :key-down)
                   (-2 :key-up)
@@ -67,7 +69,7 @@
   (let ((target-name (code-to-name code)))
     (some (lambda (name)
             (eq name target-name))
-          '(:delete-draw-object :draw-rect :draw-circle :draw-line))))
+          '(:delete-draw-object :draw-rect :draw-circle :draw-line :draw-arc))))
 
 (defun.ps+ bool-to-number (bool)
   (if bool 1 0))
@@ -139,6 +141,13 @@
                      `(:x1 ,x1 :y1 ,y1 :x2 ,x2 :y2 ,y2)
                      :id id
                      :x 0 :y 0 :depth depth :color color))
+
+(defun send-draw-arc (frame index-in-frame
+                      &key id x y depth color start-angle sweep-angle r)
+  (send-draw-message :draw-arc frame index-in-frame
+                     `(:start-angle ,start-angle :sweep-angle ,sweep-angle :r ,r)
+                     :id id
+                     :x x :y y :depth depth :color color))
 
 ;; - log - ;;
 

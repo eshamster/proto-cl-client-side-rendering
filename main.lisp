@@ -13,6 +13,7 @@
            :draw-rect
            :draw-circle
            :draw-line
+           :draw-arc
            :log-console
            ;; input
            :key-down-now-p

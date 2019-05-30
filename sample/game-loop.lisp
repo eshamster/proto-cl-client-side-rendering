@@ -8,6 +8,7 @@
                 :draw-rect
                 :draw-circle
                 :draw-line
+                :draw-arc
                 :log-console
 
                 :get-client-id-list
@@ -62,6 +63,12 @@
                :width 20 :height (+ 40 (* 20 (sin (/ *temp-counter* 2))))
                :rotate 0
                :color #xff00ff)
+    (draw-arc :id (incf id)
+              :x 100 :y 400
+              :depth 0 :r 40
+              :start-angle (+ (* PI 1/6) (* 1/6 *temp-counter*))
+              :sweep-angle (* PI 1/3)
+              :color #x00ffff)
     ;; (log-console :message "test") ; try logging
     (try-keyboard)
     (try-mouse)

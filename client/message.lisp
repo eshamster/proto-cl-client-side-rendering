@@ -8,7 +8,8 @@
                 :make-wired-rect
                 :make-solid-circle
                 :make-wired-circle
-                :make-line)
+                :make-line
+                :make-arc)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name
                 :name-to-code
@@ -107,7 +108,7 @@
     (when rotate
       (setf mesh.rotation.z rotate))))
 
-(defun.ps make-mesh-by-command (command)
+(defun.ps+ make-mesh-by-command (command)
   (let* ((kind (code-to-name (gethash :kind command)))
          (data (gethash :data command))
          (mesh (ecase kind
@@ -130,7 +131,12 @@
                                           (gethash :y1 data))
                              :pos-b (list (gethash :x2 data)
                                           (gethash :y2 data))
-                             :color (gethash :color data))))))
+                             :color (gethash :color data)))
+                 (:draw-arc
+                  (make-arc :start-angle (gethash :start-angle data)
+                            :sweep-angle (gethash :sweep-angle data)
+                            :r (gethash :r data)
+                            :color (gethash :color data))))))
     (update-common-mesh-params mesh data)
     mesh))
 

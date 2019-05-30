@@ -5,6 +5,7 @@
            :draw-rect
            :draw-circle
            :draw-line
+           :draw-arc
            :log-console)
   (:import-from :proto-cl-client-side-rendering/input
                 :update-input)
@@ -14,6 +15,7 @@
                 :send-draw-rect
                 :send-draw-circle
                 :send-draw-line
+                :send-draw-arc
                 :send-log-console
                 :send-frame-end)
   (:import-from :proto-cl-client-side-rendering/ws-server
@@ -182,6 +184,12 @@
         (make-draw-info :sender #'send-draw-line
                         :param-table (init-table-by-params
                                       id x1 y1 x2 y2 depth color))))
+
+(defun draw-arc (&key id x y depth color start-angle sweep-angle r)
+  (setf (gethash id *draw-info-table*)
+        (make-draw-info :sender #'send-draw-arc
+                        :param-table (init-table-by-params
+                                      id x y depth color start-angle sweep-angle r))))
 
 (defun log-console (&key message)
   (send-log-console *current-frame* (incf *index-in-frame*)

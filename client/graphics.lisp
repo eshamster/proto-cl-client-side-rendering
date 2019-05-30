@@ -6,6 +6,7 @@
            :make-wired-rect
            :make-solid-regular-polygon
            :make-wired-regular-polygon
+           :make-arc
            :make-solid-circle
            :make-wired-circle
            :make-wired-polygon
@@ -115,6 +116,19 @@
                  (list width height) (list 0 height)
                  (list 0 0)))
 
+;; --- arc --- ;;
+
+(def-wired-geometry make-wired-arc-with-vertex-count (r n start-angle sweep-angle)
+  (dotimes (i n)
+    (let ((angle (+ (/ (* sweep-angle i) (1- n)) start-angle)))
+      (push-vertices (list (* r (cos angle))
+                           (* r (sin angle)))))))
+
+;; TODO: Adaptively decide the 'n' according to the 'r' and 'sweep-angle'
+(defun.ps+ make-arc (&key start-angle sweep-angle r color)
+  (make-wired-arc-with-vertex-count
+   :color color :r r :start-angle start-angle :sweep-angle sweep-angle :n 60))
+
 ;; --- regular polygon --- ;;
 
 (def-solid-geometry make-solid-regular-polygon (r n (start-angle 0))
@@ -126,11 +140,9 @@
   (dotimes (i n)
     (push-faces (list n i (rem (1+ i) n)))))
 
-(def-wired-geometry make-wired-regular-polygon (r n (start-angle 0))
-  (dotimes (i (1+ n))
-    (let ((angle (to-rad (+ (/ (* 360 i) n) start-angle))))
-      (push-vertices (list (* r (cos angle))
-                           (* r (sin angle)))))))
+(defun.ps+ make-wired-regular-polygon (&key color r n (start-angle 0))
+  (make-wired-arc-with-vertex-count
+   :color color :r r :start-angle start-angle :sweep-angle (* 2 PI) :n (1+ n)))
 
 ;; --- circle --- ;;
 ;; TODO: Adaptively decide the 'n' according to the 'r'
