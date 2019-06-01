@@ -3,9 +3,9 @@
         :cl-markup)
   (:export :start
            :stop)
-  (:import-from :sample-proto-cl-client-side-rendering/game-loop
-                :start-sample-game-loop
-                :stop-sample-game-loop)
+  (:import-from :sample-proto-cl-client-side-rendering/sample-basic
+                :start-basic-sample
+                :stop-basic-sample)
   (:import-from :proto-cl-client-side-rendering
                 :ensure-js-files
                 :make-src-list-for-script-tag
@@ -14,9 +14,9 @@
 
 (defvar *server* nil)
 
-(defun start (&key (port 5000))
+(defun start (&key (port 5000) (kind :basic))
   (stop)
-  (start-sample-game-loop)
+  (start-sample-game-loop :kind kind)
   (setf *server*
         (clack:clackup
          (lack:builder
@@ -55,3 +55,18 @@
                                      :cols 80 :rows 10 :readonly t :disabled t nil))
                     (:div :id "renderer" nil)
                     (:script :src "js/client.js" nil)))))))
+
+;; --- game loop --- ;;
+
+(defvar *current-sample-kind* nil)
+
+(defun start-sample-game-loop (&key (kind :basic))
+  (ecase kind
+    (:basic (start-basic-sample)))
+  (setf *current-sample-kind* kind))
+
+(defun stop-sample-game-loop ()
+  (when *current-sample-kind*
+    (ecase *current-sample-kind*
+      (:basic (stop-basic-sample)))
+    (setf *current-sample-kind* nil)))
