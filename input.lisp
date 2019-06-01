@@ -120,11 +120,11 @@
 
 (defun get-mouse-pos (client-id)
   "Returns (value x y)"
-  (let ((pos (gethash client-id *mouse-info-table*)))
-    (values (mouse-info-x pos) (mouse-info-y pos))))
+  (let ((info (get-mouse-info client-id)))
+    (values (mouse-info-x info) (mouse-info-y info))))
 
 (defun get-wheel-delta-y (client-id)
-  (mouse-info-delta-y (gethash client-id *mouse-info-table*)))
+  (mouse-info-delta-y (get-mouse-info client-id)))
 
 ;; - touch - ;;
 
@@ -208,15 +208,17 @@ If no touches exist, return nil"
     (:right :mouse-right)
     (:center :mouse-center)))
 
+(defun get-mouse-info (client-id)
+  (ensure-gethash client-id *mouse-info-table*
+                  (make-mouse-info)))
+
 (defun update-mouse-pos-buffer (client-id x y)
-  (let ((info (ensure-gethash client-id *mouse-info-table*
-                              (make-mouse-info))))
+  (let ((info (get-mouse-info client-id)))
     (setf (mouse-info-x-buffer info) x
           (mouse-info-y-buffer info) y)))
 
 (defun update-mouse-wheel-buffer (client-id delta-y)
-  (let ((info (ensure-gethash client-id *mouse-info-table*
-                              (make-mouse-info))))
+  (let ((info (get-mouse-info client-id)))
     (incf (mouse-info-delta-y-buffer info) delta-y)))
 
 (defun update-mouse-info ()
