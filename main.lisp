@@ -6,7 +6,8 @@
         :proto-cl-client-side-rendering/middleware
         :proto-cl-client-side-rendering/protocol
         :proto-cl-client-side-rendering/utils
-        :proto-cl-client-side-rendering/ws-server)
+        :proto-cl-client-side-rendering/ws-server
+        :proto-cl-client-side-rendering/client-list-manager)
   (:export ;; game-loop
            :start-game-loop
            :stop-game-loop
@@ -39,7 +40,10 @@
            :ensure-js-files
            :make-src-list-for-script-tag
            ;; ws-server
-           :get-client-id-list
            :*target-client-id-list*
            :register-callback-on-connecting
-           :register-callback-on-disconnecting))
+           :register-callback-on-disconnecting
+           ;; client-list-manager
+           :get-new-client-id-list
+           :get-deleted-client-id-list
+           :get-client-id-list))

@@ -5,7 +5,6 @@
            :register-message-processor
            :register-callback-on-connecting
            :register-callback-on-disconnecting
-           :get-client-id-list
            :*target-client-id-list*)
   (:import-from :jonathan
                 :parse)
@@ -28,11 +27,6 @@ Otherwise, it is sent to the listed clients.")
   (id (incf *latest-client-id*)))
 
 (defvar *client-info-list* nil)
-
-(defun get-client-id-list ()
-  (sort (loop :for info :in *client-info-list*
-           :collect (client-info-id info))
-        #'<))
 
 (defvar *message-processor-table* (make-hash-table))
 

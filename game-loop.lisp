@@ -7,6 +7,9 @@
            :draw-line
            :draw-arc
            :log-console)
+  (:import-from :proto-cl-client-side-rendering/client-list-manager
+                :update-client-list
+                :get-new-client-id-list)
   (:import-from :proto-cl-client-side-rendering/frame-counter
                 :incf-frame-count
                 :get-frame-count
@@ -46,6 +49,7 @@
                        (loop :do
                             (when *stop-game-loop-p*
                               (return))
+                            (update-client-list)
                             (incf-frame-count)
                             (update-input)
                             (unwind-protect
@@ -54,7 +58,7 @@
                                    (funcall update-func)
                                    (process-all-draw-messages))
                               (send-frame-end (get-frame-count) (incf-index-in-frame)))
-                            (update-new-client-list)
+                            (update-client-list)
                             (sleep 0.5))))))
 
 (defun stop-game-loop ()
@@ -62,20 +66,6 @@
   (when *loop-thread*
     (join-thread *loop-thread*)
     (setf *loop-thread* nil)))
-
-;; --- new client list --- ;;
-
-(defvar *new-client-list-buffer* nil)
-(defvar *new-client-list* nil)
-
-(defun update-new-client-list ()
-  ;; TODO: lock list
-  (setf *new-client-list* *new-client-list-buffer*
-        *new-client-list-buffer* nil))
-
-(register-callback-on-connecting
- 'add-new-client-list-to-buffer
- (lambda (client-id) (push client-id *new-client-list-buffer*)))
 
 ;; --- draw information manager --- ;;
 
@@ -118,8 +108,8 @@
     (let ((list-in-info (draw-info-client-id-list info)))
       (cond ((null prev-info) list-in-info)
             ((same-draw-info-p info prev-info)
-             (if *new-client-list*
-                 (calc-common-target list-in-info *new-client-list*)
+             (if (get-new-client-id-list)
+                 (calc-common-target list-in-info (get-new-client-id-list))
                  nil))
             (t list-in-info)))))
 
