@@ -7,6 +7,11 @@
            :draw-line
            :draw-arc
            :log-console)
+  (:import-from :proto-cl-client-side-rendering/frame-counter
+                :incf-frame-count
+                :get-frame-count
+                :reset-frame-count
+                :incf-index-in-frame)
   (:import-from :proto-cl-client-side-rendering/input
                 :update-input)
   (:import-from :proto-cl-client-side-rendering/protocol
@@ -29,29 +34,26 @@
                 :join-thread))
 (in-package :proto-cl-client-side-rendering/game-loop)
 
-(defvar *current-frame* 0)
-(defvar *index-in-frame* 0)
 (defvar *stop-game-loop-p* nil)
 (defvar *loop-thread* nil)
 
 (defun start-game-loop (&key (update-func (lambda ())))
   (stop-game-loop)
-  (setf *stop-game-loop-p* nil
-        *current-frame* 0)
+  (setf *stop-game-loop-p* nil)
+  (reset-frame-count)
   (setf *loop-thread*
         (make-thread (lambda ()
                        (loop :do
                             (when *stop-game-loop-p*
                               (return))
-                            (setf *index-in-frame* 0)
-                            (incf *current-frame*)
+                            (incf-frame-count)
                             (update-input)
                             (unwind-protect
                                  (progn
-                                   (send-frame-start *current-frame* (incf *index-in-frame*))
+                                   (send-frame-start (get-frame-count) (incf-index-in-frame))
                                    (funcall update-func)
                                    (process-all-draw-messages))
-                              (send-frame-end *current-frame* (incf *index-in-frame*)))
+                              (send-frame-end (get-frame-count) (incf-index-in-frame)))
                             (update-new-client-list)
                             (sleep 0.5))))))
 
@@ -136,7 +138,7 @@
                (declare (ignore value))
                (unless found
                  (send-delete-draw-object
-                  *current-frame* (incf *index-in-frame*)
+                  (get-frame-count) (incf-index-in-frame)
                   :id id))))
            *prev-draw-info-table*)
   (switch-draw-info-table))
@@ -160,7 +162,7 @@
                (push value param-list)
                (push key param-list))
              param-table)
-    (apply sender (list* *current-frame* (incf *index-in-frame*)
+    (apply sender (list* (get-frame-count) (incf-index-in-frame)
                          param-list))))
 
 ;; --- sender --- ;;
@@ -192,5 +194,5 @@
                                       id x y depth color start-angle sweep-angle r))))
 
 (defun log-console (&key message)
-  (send-log-console *current-frame* (incf *index-in-frame*)
+  (send-log-console (get-frame-count) (incf-index-in-frame)
                     :message message))
