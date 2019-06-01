@@ -16,6 +16,7 @@
                 :key-down-p
                 :mouse-down-p
                 :get-mouse-pos
+                :get-wheel-delta-y
                 :touch-summary-down-p
                 :get-touch-summary-pos))
 (in-package :sample-proto-cl-client-side-rendering/game-loop)
@@ -33,6 +34,10 @@
 (defvar *temp-x* 100)
 (defvar *temp-y* 300)
 (defparameter *temp-speed* 10)
+
+(defvar *temp-r* 50)
+(defvar *temp-max-r* 100)
+(defvar *temp-min-r* 10)
 
 (defun update ()
   (incf *temp-counter*)
@@ -76,7 +81,7 @@
     (draw-circle :id (incf id)
                  :x *temp-x* :y *temp-y*
                  :depth 10 :fill-p t
-                 :r 50 :color #xffffff)
+                 :r *temp-r* :color #xffffff)
     (draw-line :id (incf id)
                :x1 20 :y1 30
                :x2 500 :y2 60
@@ -112,7 +117,11 @@
     (when (mouse-down-p client-id :left)
       (multiple-value-bind (x y) (get-mouse-pos client-id)
         (setf *temp-x* x
-              *temp-y* y)))))
+              *temp-y* y)))
+    (let ((delta-y (get-wheel-delta-y client-id))
+          (diff 10))
+      (cond ((< delta-y 0) (incf *temp-r* diff))
+            ((> delta-y 0) (decf *temp-r* diff))))))
 
 (defun try-touch ()
   (dolist (client-id (get-client-id-list))

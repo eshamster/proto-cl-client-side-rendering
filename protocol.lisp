@@ -44,6 +44,7 @@
                   (-11 :mouse-down)
                   (-12 :mouse-up)
                   (-13 :mouse-move)
+                  (-14 :mouse-wheel)
                   (-21 :touch-start)
                   (-22 :touch-end)
                   (-23 :touch-move)

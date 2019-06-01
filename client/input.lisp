@@ -23,6 +23,7 @@
   (window.add-event-listener "mouseup" on-mouseup)
   (window.add-event-listener "mousedown" on-mousedown)
   (window.add-event-listener "mousemove" on-mousemove)
+  (window.add-event-listener "wheel" on-wheel)
   (window.add-event-listener "touchstart" on-touchstart)
   (window.add-event-listener "touchend" on-touchend)
   (window.add-event-listener "touchmove" on-touchmove))
@@ -87,6 +88,13 @@
 
 (defun.ps on-mousemove (e)
   (send-mouse-message :mouse-move e))
+
+;; wheel
+
+(defun.ps on-wheel (e)
+  (send-json-to-server (ps:create :kind (name-to-code :mouse-wheel)
+                                  :data (ps:create
+                                         :delta-y e.delta-y))))
 
 ;; - touch - ;;
 

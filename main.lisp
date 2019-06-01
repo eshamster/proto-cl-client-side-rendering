@@ -25,6 +25,7 @@
            :mouse-up-now-p
            :mouse-up-p
            :get-mouse-pos
+           :get-wheel-delta-y
            :touch-summary-down-now-p
            :touch-summary-down-p
            :touch-summary-up-now-p

@@ -12,6 +12,7 @@
            :mouse-up-now-p
            :mouse-up-p
            :get-mouse-pos
+           :get-wheel-delta-y
 
            :touch-summary-down-now-p
            :touch-summary-down-p
@@ -25,7 +26,9 @@
                 :register-message-processor
                 :register-callback-on-disconnecting)
   (:import-from :alexandria
-                :make-keyword))
+                :make-keyword
+                :ensure-gethash
+                :hash-table-values))
 (in-package :proto-cl-client-side-rendering/input)
 
 (progn
@@ -57,6 +60,10 @@
           client-id
           (gethash :x data)
           (gethash :y data)))
+        (:mouse-wheel
+         (update-mouse-wheel-buffer
+          client-id
+          (gethash :delta-y data)))
         ((:touch-start :touch-end :touch-move)
          (update-touch-info-by-event client-id kind data))
         (t (print-nested-hash-table message-table)))))
@@ -85,7 +92,7 @@
                         key-down-p-table)))
            *client-input-info-table*)
   ;; mouse
-  (update-mouse-pos)
+  (update-mouse-info)
   ;; touch
   (update-touch-info))
 
@@ -113,8 +120,11 @@
 
 (defun get-mouse-pos (client-id)
   "Returns (value x y)"
-  (let ((pos (gethash client-id *mouse-pos-table*)))
-    (values (mouse-pos-x pos) (mouse-pos-y pos))))
+  (let ((pos (gethash client-id *mouse-info-table*)))
+    (values (mouse-info-x pos) (mouse-info-y pos))))
+
+(defun get-wheel-delta-y (client-id)
+  (mouse-info-delta-y (gethash client-id *mouse-info-table*)))
 
 ;; - touch - ;;
 
@@ -185,9 +195,12 @@ If no touches exist, return nil"
 
 ;; - mouse - ;;
 
-(defstruct mouse-pos x y x-buffer y-buffer)
+(defstruct mouse-info
+  (x 0) (x-buffer 0)
+  (y 0) (y-buffer 0)
+  (delta-y 0) (delta-y-buffer 0))
 
-(defvar *mouse-pos-table* (make-hash-table))
+(defvar *mouse-info-table* (make-hash-table))
 
 (defun mouse-button-to-key-name (button)
   (case button
@@ -196,23 +209,28 @@ If no touches exist, return nil"
     (:center :mouse-center)))
 
 (defun update-mouse-pos-buffer (client-id x y)
-  (let ((pos (gethash client-id *mouse-pos-table*)))
-    (unless pos
-      (setf pos (make-mouse-pos)
-            (gethash client-id *mouse-pos-table*) pos))
-    (setf (mouse-pos-x-buffer pos) x
-          (mouse-pos-y-buffer pos) y)))
+  (let ((info (ensure-gethash client-id *mouse-info-table*
+                              (make-mouse-info))))
+    (setf (mouse-info-x-buffer info) x
+          (mouse-info-y-buffer info) y)))
 
-(defun update-mouse-pos ()
-  (maphash (lambda (client-id pos)
-             (declare (ignore client-id))
-             (with-slots (x y x-buffer y-buffer) pos
-               (setf x x-buffer
-                     y y-buffer)))
-           *mouse-pos-table*))
+(defun update-mouse-wheel-buffer (client-id delta-y)
+  (let ((info (ensure-gethash client-id *mouse-info-table*
+                              (make-mouse-info))))
+    (incf (mouse-info-delta-y-buffer info) delta-y)))
+
+(defun update-mouse-info ()
+  (dolist (info (hash-table-values *mouse-info-table*))
+    (with-slots (x y x-buffer y-buffer
+                   delta-y delta-y-buffer)
+        info
+      (setf x x-buffer
+            y y-buffer
+            delta-y delta-y-buffer
+            delta-y-buffer 0))))
 
 (defun delete-mouse-info (client-id)
-  (remhash client-id *mouse-pos-table*))
+  (remhash client-id *mouse-info-table*))
 
 ;; - touch - ;;
 
