@@ -3,15 +3,15 @@
   (:export :output-client-js)
   (:import-from :proto-cl-client-side-rendering/client/camera
                 :init-camera)
-  (:import-from :proto-cl-client-side-rendering/client/global
-                :set-rendered-dom
-                :set-screen-size)
   (:import-from :proto-cl-client-side-rendering/client/input
                 :init-input)
   (:import-from :proto-cl-client-side-rendering/client/message
                 :dequeue-draw-commands
                 :interpret-draw-command
                 :process-message)
+  (:import-from :proto-cl-client-side-rendering/client/renderer
+                :init-screen-size
+                :get-screen-size)
   (:import-from :proto-cl-client-side-rendering/client/socket
                 :register-socket-on-message)
   (:import-from :parenscript
@@ -42,55 +42,18 @@
              (init-input))
            file)))
 
-;; --- graphic --- ;;
+;; --- initializer --- ;;
 
-;; TODO: Fix the following issue
-;; This is a temporal solution to avoid unintentional scroll bar
-;; when the height size eqauls to 100% of the screen height.
-;; In such case, 7px area is appeared both in top and bottom.
-;; But the cause is not revealed.
-(defvar.ps+ *window-height-adjust* 14)
-
-(defun.ps initialize-screen-size (rendered-dom renderer screen-width screen-height resize-to-screen-p)
-  (setf *resize-to-screen-p* resize-to-screen-p)
-  (labels ((calc-scale ()
-             (min (/ window.inner-width screen-width)
-                  (/ (- window.inner-height *window-height-adjust*) screen-height)))
-           (set-position-by-size (width height)
-             (setf rendered-dom.style.position "absolute"
-                   rendered-dom.style.left (+ (/ (- window.inner-width width) 2) "px")
-                   rendered-dom.style.top (+ (/ (- window.inner-height height) 2) "px")))
-           (set-size (width height)
-             (renderer.set-size width height)
-             (set-position-by-size width height))
-           (resize ()
-             (let ((scale (if *resize-to-screen-p* (calc-scale) 1)))
-               (set-size (* screen-width scale)
-                         (* screen-height scale))
-               (set-screen-size screen-width screen-height scale))))
-    (resize)
-    (let ((resize-timer nil))
-      (window.add-event-listener
-       "resize" (lambda (e)
-                  (declare (ignore e))
-                  (when resize-timer
-                    (clear-timeout resize-timer))
-                  (setf resize-timer
-                        (set-timeout (lambda () (resize))
-                                     100)))))))
-
-(defun.ps start-2d-game (&key screen-width screen-height
-                              rendered-dom
+(defun.ps start-2d-game (&key rendered-dom
                               (resize-to-screen-p t)
                               (init-function (lambda (scene) nil))
                               (update-function (lambda (scene) nil)))
   (let* ((scene (new (#j.THREE.Scene#)))
          (renderer (new #j.THREE.WebGLRenderer#))
-         (camera (init-camera 0 0 screen-width screen-height)))
-    (set-rendered-dom rendered-dom)
-    (initialize-screen-size rendered-dom renderer
-                            screen-width screen-height
-                            resize-to-screen-p)
+         camera)
+    (init-screen-size rendered-dom renderer resize-to-screen-p)
+    (multiple-value-bind (screen-width screen-height) (get-screen-size)
+      (setf camera (init-camera 0 0 screen-width screen-height)))
     (chain rendered-dom
            (append-child renderer.dom-element))
     (let ((light (new (#j.THREE.DirectionalLight# 0xffffff))))
@@ -114,6 +77,5 @@
         (interpret-draw-command scene command)))))
 
 (def-top-level-form.ps :run-start-2d-game
-  (start-2d-game :screen-width 800 :screen-height 600
-                 :rendered-dom (document.query-selector "#renderer")
+  (start-2d-game :rendered-dom (document.query-selector "#renderer")
                  :update-function #'update-draw))

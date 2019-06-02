@@ -3,7 +3,7 @@
   (:export :init-input)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :name-to-code)
-  (:import-from :proto-cl-client-side-rendering/client/global
+  (:import-from :proto-cl-client-side-rendering/client/renderer
                 :get-rendered-dom
                 :get-screen-scale)
   (:import-from :proto-cl-client-side-rendering/client/socket
