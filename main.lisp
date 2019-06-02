@@ -2,6 +2,7 @@
   (:nicknames :proto-cl-client-side-rendering)
   (:use :cl
         :proto-cl-client-side-rendering/game-loop
+        :proto-cl-client-side-rendering/graphics
         :proto-cl-client-side-rendering/input
         :proto-cl-client-side-rendering/middleware
         :proto-cl-client-side-rendering/protocol
@@ -11,11 +12,12 @@
   (:export ;; game-loop
            :start-game-loop
            :stop-game-loop
+           :log-console
+           ;; graphics
            :draw-rect
            :draw-circle
            :draw-line
            :draw-arc
-           :log-console
            ;; input
            :key-down-now-p
            :key-down-p
