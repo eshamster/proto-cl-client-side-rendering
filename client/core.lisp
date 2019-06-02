@@ -2,7 +2,7 @@
   (:use :cl)
   (:export :output-client-js)
   (:import-from :proto-cl-client-side-rendering/client/camera
-                :init-camera)
+                :get-camera)
   (:import-from :proto-cl-client-side-rendering/client/input
                 :init-input)
   (:import-from :proto-cl-client-side-rendering/client/message
@@ -49,11 +49,8 @@
                               (init-function (lambda (scene) nil))
                               (update-function (lambda (scene) nil)))
   (let* ((scene (new (#j.THREE.Scene#)))
-         (renderer (new #j.THREE.WebGLRenderer#))
-         camera)
+         (renderer (new #j.THREE.WebGLRenderer#)))
     (init-screen-size rendered-dom renderer resize-to-screen-p)
-    (multiple-value-bind (screen-width screen-height) (get-screen-size)
-      (setf camera (init-camera 0 0 screen-width screen-height)))
     (chain rendered-dom
            (append-child renderer.dom-element))
     (let ((light (new (#j.THREE.DirectionalLight# 0xffffff))))
@@ -62,7 +59,7 @@
     (funcall init-function scene)
     (labels ((render-loop ()
                (request-animation-frame render-loop)
-               (renderer.render scene camera)
+               (renderer.render scene (get-camera))
                (funcall update-function scene)))
       (render-loop))))
 

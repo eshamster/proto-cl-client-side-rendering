@@ -6,7 +6,8 @@
            :get-screen-scale
            :get-rendered-dom)
   (:import-from :proto-cl-client-side-rendering/client/camera
-                :init-camera)
+                :init-camera
+                :set-camera-params)
   (:import-from :ps-experiment
                 :defvar.ps
                 :defvar.ps+
@@ -59,6 +60,8 @@
            (set-size (width height)
              (*renderer*.set-size width height)
              (set-position-by-size width height)))
+    (set-camera-params :width screen-width
+                       :height screen-height)
     (let ((scale (if *resize-to-screen-p* (calc-scale) 1)))
       (set-size (* screen-width scale)
                 (* screen-height scale))
@@ -70,6 +73,10 @@
   (setf *rendered-dom* rendered-dom
         *renderer* renderer
         *resize-to-screen-p* resize-to-screen-p)
+  (init-camera :offset-x 0
+               :offset-y 0
+               :width *screen-width*
+               :height *screen-height*)
   (set-screen-size *screen-width* *screen-height*)
   (let ((resize-timer nil))
     (window.add-event-listener

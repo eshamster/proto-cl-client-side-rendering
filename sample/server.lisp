@@ -6,6 +6,9 @@
   (:import-from :sample-proto-cl-client-side-rendering/sample-basic
                 :start-basic-sample
                 :stop-basic-sample)
+  (:import-from :sample-proto-cl-client-side-rendering/sample-screen-and-camera
+                :start-screen-and-camera-sample
+                :stop-screen-and-camera-sample)
   (:import-from :proto-cl-client-side-rendering
                 :ensure-js-files
                 :make-src-list-for-script-tag
@@ -62,11 +65,13 @@
 
 (defun start-sample-game-loop (&key (kind :basic))
   (ecase kind
-    (:basic (start-basic-sample)))
+    (:basic (start-basic-sample))
+    (:screen-and-camera (start-screen-and-camera-sample)))
   (setf *current-sample-kind* kind))
 
 (defun stop-sample-game-loop ()
   (when *current-sample-kind*
     (ecase *current-sample-kind*
-      (:basic (stop-basic-sample)))
+      (:basic (stop-basic-sample))
+      (:screen-and-camera (stop-screen-and-camera-sample)))
     (setf *current-sample-kind* nil)))
