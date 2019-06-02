@@ -1,6 +1,8 @@
 (defpackage proto-cl-client-side-rendering/client/core
   (:use :cl)
   (:export :output-client-js)
+  (:import-from :proto-cl-client-side-rendering/client/camera
+                :init-camera)
   (:import-from :proto-cl-client-side-rendering/client/global
                 :set-rendered-dom
                 :set-screen-size)
@@ -41,19 +43,6 @@
            file)))
 
 ;; --- graphic --- ;;
-
-;; The followings are based on cl-web-2d-game
-
-(defun.ps init-camera (offset-x offset-y width height)
-  (let* ((x offset-x)
-         (y offset-y)
-         (z 1000)
-         (camera (new (#j.THREE.OrthographicCamera#
-                       (* x -1) (- width x)
-                       (- height y) (* y -1)
-                       0 (* z 2)))))
-    (camera.position.set 0 0 z)
-    camera))
 
 ;; TODO: Fix the following issue
 ;; This is a temporal solution to avoid unintentional scroll bar
