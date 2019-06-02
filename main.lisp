@@ -5,7 +5,7 @@
         :proto-cl-client-side-rendering/graphics
         :proto-cl-client-side-rendering/input
         :proto-cl-client-side-rendering/middleware
-        :proto-cl-client-side-rendering/protocol
+        :proto-cl-client-side-rendering/screen-size
         :proto-cl-client-side-rendering/utils
         :proto-cl-client-side-rendering/ws-server
         :proto-cl-client-side-rendering/client-list-manager)
@@ -36,8 +36,9 @@
            :get-touch-summary-pos
            ;; middleware
            :make-client-side-rendering-middleware
-           ;; protocol
-           :send-draw-circle
+           ;; screen-size
+           :get-screen-size
+           :set-screen-size
            ;; utils
            :ensure-js-files
            :make-src-list-for-script-tag

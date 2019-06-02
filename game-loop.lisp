@@ -24,6 +24,8 @@
                 :send-draw-arc
                 :send-log-console
                 :send-frame-end)
+  (:import-from :proto-cl-client-side-rendering/screen-size
+                :update-screen-size)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server
                 :*target-client-id-list*)
@@ -52,6 +54,7 @@
                             (unwind-protect
                                  (progn
                                    (send-frame-start (get-frame-count) (incf-index-in-frame))
+                                   (update-screen-size)
                                    (funcall update-func)
                                    (update-graphics))
                               (send-frame-end (get-frame-count) (incf-index-in-frame)))

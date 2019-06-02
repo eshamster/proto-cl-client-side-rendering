@@ -15,6 +15,8 @@
                 :name-to-code
                 :draw-code-p
                 :number-to-bool)
+  (:import-from :proto-cl-client-side-rendering/client/renderer
+                :set-screen-size)
   (:import-from :parenscript
                 :chain
                 :new
@@ -72,10 +74,12 @@
               (unless count
                 (setf count 0))
               (incf count))
-            (cond ((eq (code-to-name kind-code) :log-console)
-                   (interpret-log-console parsed))
-                  ((draw-code-p kind-code)
-                   (push-draw-command-to-buffer parsed)))))
+            (cond ((draw-code-p kind-code)
+                   (push-draw-command-to-buffer parsed))
+                  (t (ecase (code-to-name kind-code)
+                       ((:frame-start :frame-end) t)
+                       (:log-console (interpret-log-console parsed))
+                       (:set-screen-size (interpret-set-screen-size parsed)))))))
         (print-message-stat message-stat))
       (queue-draw-commands-in-buffer)
       (setf *frame-json-buffer* (list)))))
@@ -89,6 +93,10 @@
 
 (defun.ps interpret-log-console (command)
   (console.log (@ command :data :message)))
+
+(defun.ps interpret-set-screen-size (command)
+  (set-screen-size (@ command :data :width)
+                   (@ command :data :height)))
 
 ;; TODO: The followings should be moved to another package
 

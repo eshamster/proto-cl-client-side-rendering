@@ -9,6 +9,7 @@
            :send-draw-circle
            :send-draw-line
            :send-draw-arc
+           :send-set-screen-size
            :send-log-console
            :draw-code-p
            :bool-to-number
@@ -37,6 +38,7 @@
                   (12 :draw-circle)
                   (13 :draw-arc)
                   (15 :draw-line)
+                  (51 :set-screen-size)
                   (101 :log-console)
                   ;; client to server
                   (-1 :key-down)
@@ -149,6 +151,12 @@
                      `(:start-angle ,start-angle :sweep-angle ,sweep-angle :r ,r)
                      :id id
                      :x x :y y :depth depth :color color))
+
+;; - screen size - ;;
+
+(defun send-set-screen-size (frame index-in-frame &key width height)
+  (send-message :set-screen-size frame index-in-frame
+                `(:width ,width :height ,height)))
 
 ;; - log - ;;
 
