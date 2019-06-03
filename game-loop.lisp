@@ -3,6 +3,8 @@
   (:export :start-game-loop
            :stop-game-loop
            :log-console)
+  (:import-from :proto-cl-client-side-rendering/camera
+                :update-camera-info)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :update-client-list
                 :get-new-client-id-list)
@@ -50,6 +52,7 @@
                               (return))
                             (update-client-list)
                             (incf-frame-count)
+                            (update-camera-info)
                             (update-input)
                             (unwind-protect
                                  (progn

@@ -10,6 +10,7 @@
            :send-draw-line
            :send-draw-arc
            :send-set-screen-size
+           :send-set-camera
            :send-log-console
            :draw-code-p
            :bool-to-number
@@ -39,6 +40,7 @@
                   (13 :draw-arc)
                   (15 :draw-line)
                   (51 :set-screen-size)
+                  (55 :set-camera)
                   (101 :log-console)
                   ;; client to server
                   (-1 :key-down)
@@ -157,6 +159,12 @@
 (defun send-set-screen-size (frame index-in-frame &key width height)
   (send-message :set-screen-size frame index-in-frame
                 `(:width ,width :height ,height)))
+
+;; - camera - ;;
+
+(defun send-set-camera (frame index-in-frame &key center-x center-y scale)
+  (send-message :set-camera frame index-in-frame
+                `(:center-x ,center-x :center-y ,center-y :scale ,scale)))
 
 ;; - log - ;;
 

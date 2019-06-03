@@ -1,6 +1,7 @@
 (defpackage proto-cl-client-side-rendering/main
   (:nicknames :proto-cl-client-side-rendering)
   (:use :cl
+        :proto-cl-client-side-rendering/camera
         :proto-cl-client-side-rendering/game-loop
         :proto-cl-client-side-rendering/graphics
         :proto-cl-client-side-rendering/input
@@ -9,7 +10,12 @@
         :proto-cl-client-side-rendering/utils
         :proto-cl-client-side-rendering/ws-server
         :proto-cl-client-side-rendering/client-list-manager)
-  (:export ;; game-loop
+  (:export ;; camear
+           :get-camera-center-pos
+           :get-camera-scale
+           :set-camera-center-pos
+           :set-camera-scale
+           ;; game-loop
            :start-game-loop
            :stop-game-loop
            :log-console

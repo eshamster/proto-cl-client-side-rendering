@@ -11,8 +11,14 @@
                 :get-screen-size
                 :set-screen-size
 
+                :get-camera-center-pos
+                :get-camera-scale
+                :set-camera-center-pos
+                :set-camera-scale
+
                 :get-client-id-list
                 :*target-client-id-list*
+                :key-down-p
                 :key-down-now-p
                 :mouse-down-p
                 :get-mouse-pos
@@ -34,7 +40,28 @@
                  :depth 0
                  :r 40 :color #xffffff
                  :fill-p t)
-    (update-screen-size)))
+    (draw-circle :id (incf id)
+                 :x 200 :y 300
+                 :depth 0
+                 :r 40 :color #xffffff
+                 :fill-p t)
+    (draw-circle :id (incf id)
+                 :x 600 :y 300
+                 :depth 0
+                 :r 40 :color #xffffff
+                 :fill-p t)
+    (draw-circle :id (incf id)
+                 :x 400 :y 100
+                 :depth 0
+                 :r 40 :color #xffffff
+                 :fill-p t)
+    (draw-circle :id (incf id)
+                 :x 400 :y 500
+                 :depth 0
+                 :r 40 :color #xffffff
+                 :fill-p t)
+    (update-screen-size)
+    (update-camera)))
 
 (defparameter *diff-screen-size* 50)
 (defparameter *min-screen-width* 400)
@@ -62,3 +89,27 @@
                    (= new-height old-height))
         (format t "Screen size: width=~D, height=~D~%" new-width new-height)
         (set-screen-size :width new-width :height new-height)))))
+
+(defparameter *diff-camera-scale* 1/5)
+(defparameter *min-camera-scale* 2/5)
+(defparameter *max-camera-scale* 2)
+(defparameter *diff-camera-pos* 20)
+
+(defun update-camera ()
+  (dolist (client-id (get-client-id-list))
+    (let ((scale (get-camera-scale client-id)))
+      (when (> (get-wheel-delta-y client-id) 0)
+        (set-camera-scale
+         client-id (max *min-camera-scale* (- scale *diff-camera-scale*))))
+      (when (< (get-wheel-delta-y client-id) 0)
+        (set-camera-scale
+         client-id (min *max-camera-scale* (+ scale *diff-camera-scale*)))))
+    (multiple-value-bind (x y) (get-camera-center-pos client-id)
+      (when (key-down-p client-id :w)
+        (set-camera-center-pos client-id x (+ y *diff-camera-pos*)))
+      (when (key-down-p client-id :s)
+        (set-camera-center-pos client-id x (- y *diff-camera-pos*)))
+      (when (key-down-p client-id :d)
+        (set-camera-center-pos client-id (+ x *diff-camera-pos*) y))
+      (when (key-down-p client-id :a)
+        (set-camera-center-pos client-id (- x *diff-camera-pos*) y)))))

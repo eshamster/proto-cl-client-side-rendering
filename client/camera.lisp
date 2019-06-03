@@ -16,6 +16,7 @@
 (enable-ps-experiment-syntax)
 
 (defvar.ps+ *camera* nil)
+(defvar.ps+ *scale* 1)
 
 (defun.ps init-camera (&key offset-x offset-y width height)
   (let* ((x offset-x)
@@ -35,13 +36,14 @@
 (defun.ps get-camera ()
   *camera*)
 
-(defun.ps set-camera-params (&key (offset-x (* *camera*.left -1))
-                                  (offset-y (* *camera*.bottom -1))
-                                  (width (- *camera*.right *camera*.left))
-                                  (height (- *camera*.top *camera*.bottom)))
-  (console.log (+ offset-x ":" offset-y))
-  (setf *camera*.left (* offset-x -1)
-        *camera*.right (- width offset-x)
-        *camera*.bottom (* offset-y -1)
-        *camera*.top (- height offset-y))
+(defun.ps set-camera-params (&key (offset-x *camera*.left)
+                                  (offset-y *camera*.bottom)
+                                  (width (* (- *camera*.right *camera*.left) *scale*))
+                                  (height (* (- *camera*.top *camera*.bottom) *scale*))
+                                  (scale *scale*))
+  (setf *camera*.left offset-x
+        *camera*.right (+ (/ width scale) offset-x)
+        *camera*.bottom offset-y
+        *camera*.top (+ (/ height scale) offset-y)
+        *scale* scale)
   (*camera*.update-projection-matrix))

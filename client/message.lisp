@@ -3,6 +3,8 @@
   (:export :dequeue-draw-commands
            :interpret-draw-command
            :process-message)
+  (:import-from :proto-cl-client-side-rendering/client/camera
+                :set-camera-params)
   (:import-from :proto-cl-client-side-rendering/client/graphics
                 :make-solid-rect
                 :make-wired-rect
@@ -16,6 +18,7 @@
                 :draw-code-p
                 :number-to-bool)
   (:import-from :proto-cl-client-side-rendering/client/renderer
+                :get-screen-size
                 :set-screen-size)
   (:import-from :parenscript
                 :chain
@@ -79,7 +82,8 @@
                   (t (ecase (code-to-name kind-code)
                        ((:frame-start :frame-end) t)
                        (:log-console (interpret-log-console parsed))
-                       (:set-screen-size (interpret-set-screen-size parsed)))))))
+                       (:set-screen-size (interpret-set-screen-size parsed))
+                       (:set-camera (interpret-set-camera-params parsed)))))))
         (print-message-stat message-stat))
       (queue-draw-commands-in-buffer)
       (setf *frame-json-buffer* (list)))))
@@ -97,6 +101,16 @@
 (defun.ps interpret-set-screen-size (command)
   (set-screen-size (@ command :data :width)
                    (@ command :data :height)))
+
+(defun.ps interpret-set-camera-params (command)
+  (let ((center-x (@ command :data :center-x))
+        (center-y (@ command :data :center-y))
+        (scale (@ command :data :scale)))
+    (multiple-value-bind (width height) (get-screen-size)
+      (set-camera-params
+       :offset-x (- center-x (/ width scale 2))
+       :offset-y (- center-y (/ height scale 2))
+       :scale scale))))
 
 ;; TODO: The followings should be moved to another package
 
