@@ -19,12 +19,13 @@
            :touch-summary-up-now-p
            :touch-summary-up-p
            :get-touch-summary-pos)
+  (:import-from :proto-cl-client-side-rendering/client-list-manager
+                :get-deleted-client-id-list)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :name-to-code
                 :code-to-name)
   (:import-from :proto-cl-client-side-rendering/ws-server
-                :register-message-processor
-                :register-callback-on-disconnecting)
+                :register-message-processor)
   (:import-from :alexandria
                 :make-keyword
                 :ensure-gethash
@@ -70,15 +71,12 @@
 
   (register-message-processor 'input-processor #'process-input-message))
 
-(progn
-  (defun process-on-disconnecting (client-id)
-    (delete-keyboard-info client-id)
-    (delete-mouse-info client-id)
-    (delete-touch-info client-id))
-
-  (register-callback-on-disconnecting 'input-callback #'process-on-disconnecting))
-
 (defun update-input ()
+  ;; - delete - ;;
+  (dolist (client-id (get-deleted-client-id-list))
+    (print 'test)
+    (delete-client-input-info client-id))
+  ;; - update - ;;
   ;; keyboard
   (maphash (lambda (id info)
              (declare (ignore id))
@@ -162,6 +160,11 @@ If no touches exist, return nil"
       (values (/ sum-x num) (/ sum-y num)))))
 
 ;; --- internal --- ;;
+
+(defun delete-client-input-info (client-id)
+  (delete-keyboard-info client-id)
+  (delete-mouse-info client-id)
+  (delete-touch-info client-id))
 
 ;; - keyboard (and mouse click) - ;;
 
