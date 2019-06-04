@@ -61,7 +61,6 @@
                                    (funcall update-func)
                                    (update-graphics))
                               (send-frame-end (get-frame-count) (incf-index-in-frame)))
-                            (update-client-list)
                             (sleep 0.5))))))
 
 (defun stop-game-loop ()
