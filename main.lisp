@@ -10,7 +10,7 @@
         :proto-cl-client-side-rendering/utils
         :proto-cl-client-side-rendering/ws-server
         :proto-cl-client-side-rendering/client-list-manager)
-  (:export ;; camear
+  (:export ;; camera
            :get-camera-center-pos
            :get-camera-scale
            :set-camera-center-pos
@@ -18,6 +18,8 @@
            ;; game-loop
            :start-game-loop
            :stop-game-loop
+           :get-fps
+           :set-fps
            :log-console
            ;; graphics
            :draw-rect
