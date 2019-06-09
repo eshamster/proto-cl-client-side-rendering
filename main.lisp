@@ -26,6 +26,7 @@
            :draw-circle
            :draw-line
            :draw-arc
+           :skip-drawing-in-this-frame
            ;; input
            :key-down-now-p
            :key-down-p

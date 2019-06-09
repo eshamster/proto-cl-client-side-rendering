@@ -4,7 +4,8 @@
            :draw-rect
            :draw-circle
            :draw-line
-           :draw-arc)
+           :draw-arc
+           :skip-drawing-in-this-frame)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :get-new-client-id-list)
   (:import-from :proto-cl-client-side-rendering/frame-counter
@@ -22,9 +23,23 @@
                 :make-keyword))
 (in-package :proto-cl-client-side-rendering/graphics)
 
+;; --- data --- ;;
+
+(defvar *skip-drawing-p* nil)
+(defvar *new-client-list* nil)
+
 ;; --- interface --- ;;
 
+(defun skip-drawing-in-this-frame ()
+  (setf *skip-drawing-p* t))
+
 (defun update-graphics ()
+  (alexandria:appendf *new-client-list* (get-new-client-id-list))
+  (when *skip-drawing-p*
+    (when (> (hash-table-count *draw-info-table*) 0)
+      (warn "Although drawing is skipped in this frame, some draw operations were issued."))
+    (setf *skip-drawing-p* nil)
+    (return-from update-graphics))
   (maphash (lambda (id draw-info)
              (let ((*target-client-id-list* (calc-target-client-id-list id)))
                (call-sender-by-param-table
@@ -42,7 +57,8 @@
                   (get-frame-count) (incf-index-in-frame)
                   :id id))))
            *prev-draw-info-table*)
-  (switch-draw-info-table))
+  (switch-draw-info-table)
+  (setf *new-client-list* nil))
 
 ;; --- draw information manager --- ;;
 
@@ -85,8 +101,8 @@
     (let ((list-in-info (draw-info-client-id-list info)))
       (cond ((null prev-info) list-in-info)
             ((same-draw-info-p info prev-info)
-             (if (get-new-client-id-list)
-                 (calc-common-target list-in-info (get-new-client-id-list))
+             (if *new-client-list*
+                 (calc-common-target list-in-info *new-client-list*)
                  nil))
             (t list-in-info)))))
 
