@@ -16,7 +16,10 @@
            :bool-to-number
            :number-to-bool)
   (:import-from :proto-cl-client-side-rendering/ws-server
-                :send-from-server)
+                :send-from-server
+                :*target-client-id-list*
+                :same-target-client-list-p
+                :copy-target-client-id-list)
   (:import-from :jonathan
                 :to-json)
   (:import-from :ps-experiment
@@ -84,6 +87,10 @@
 
 ;; --- sender --- ;;
 
+(defvar *pre-target-client-id-list* nil)
+(defvar *message-buffer* nil)
+(defparameter *max-message-buffer* 10) ; Not well-considered value
+
 (defun down-case-keyword (data)
   (labels ((down (keyword)
              (intern (string-downcase (symbol-name keyword))
@@ -100,12 +107,24 @@
     (rec data)
     data))
 
+(defun send-messages-in-buffer ()
+  (send-from-server (to-json *message-buffer*))
+  (setf *message-buffer* nil))
+
 (defun send-message (kind-name frame index-in-frame data)
-  (send-from-server
-   (to-json (down-case-keyword `(:kind ,(name-to-code kind-name)
-                                 :frame ,frame
-                                 :no ,index-in-frame
-                                 :data ,data)))))
+  (unless (same-target-client-list-p *pre-target-client-id-list*
+                                     *target-client-id-list*)
+    (let ((*target-client-id-list* *pre-target-client-id-list*))
+      (send-messages-in-buffer)))
+  (setf *pre-target-client-id-list* (copy-target-client-id-list))
+  (push (down-case-keyword `(:kind ,(name-to-code kind-name)
+                             :frame ,frame
+                             :no ,index-in-frame
+                             :data ,data))
+        *message-buffer*)
+  (when (or (eq kind-name :frame-end)
+            (>= (length *message-buffer*) *max-message-buffer*))
+    (send-messages-in-buffer)))
 
 ;; - start and end - ;;
 

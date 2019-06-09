@@ -50,10 +50,18 @@
 (defun.ps dequeue-draw-commands ()
   (*draw-command-queue*.pop))
 
-(defun.ps push-message-to-buffer (parsed-message)
-  (*frame-json-buffer*.push parsed-message))
+(defun.ps push-message-to-buffer (parsed-message-list)
+  (incf *receive-count-in-frame*)
+  (let ((frame-end-p nil))
+    (dolist (message parsed-message-list)
+      (*frame-json-buffer*.push message)
+      (when (target-kind-p :frame-end message)
+        (setf frame-end-p t)))
+    frame-end-p))
 
 ;; debug
+(defvar.ps+ *receive-count-in-frame* 0)
+
 (defun.ps print-message-stat (message-stat)
   (let ((total 0)
         (text ""))
@@ -63,13 +71,16 @@
                       count #\Newline))
         (incf total count)))
     (setf text
-          (+ "TOTAL: " total #\Newline "---" #\Newline text))
-    (setf (chain document (get-element-by-id "js-code") value) text)))
+          (+ "TOTAL: " total #\Newline
+             "Receive Count: " *receive-count-in-frame* #\Newline
+             "---" #\Newline
+             text))
+    (setf (chain document (get-element-by-id "js-code") value) text)
+    (setf *receive-count-in-frame* 0)))
 
 (defun.ps+ process-message (message)
   (let ((parsed-message (receiving-to-json message)))
-    (push-message-to-buffer parsed-message)
-    (when (target-kind-p :frame-end parsed-message)
+    (when (push-message-to-buffer parsed-message)
       (let ((message-stat (make-hash-table)))
         (dolist (parsed *frame-json-buffer*)
           (let ((kind-code (gethash :kind parsed)))

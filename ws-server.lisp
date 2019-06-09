@@ -5,7 +5,9 @@
            :register-message-processor
            :register-callback-on-connecting
            :register-callback-on-disconnecting
-           :*target-client-id-list*)
+           :*target-client-id-list*
+           :same-target-client-list-p
+           :copy-target-client-id-list)
   (:import-from :jonathan
                 :parse)
   (:import-from :websocket-driver
@@ -19,6 +21,19 @@
 (defvar *target-client-id-list* :all
   "If ':all', a message is sent to all clients.
 Otherwise, it is sent to the listed clients.")
+
+(defun same-target-client-list-p (lst1 lst2)
+  (or (and (eq lst1 :all)
+           (eq lst2 :all))
+      (and (listp lst1)
+           (listp lst2)
+           (equalp (sort lst1 #'<)
+               (sort lst2 #'<)))))
+
+(defun copy-target-client-id-list (&optional (lst *target-client-id-list*))
+  (if (eq lst :all)
+      :all
+      (copy-list lst)))
 
 (defvar *latest-client-id* 0)
 
