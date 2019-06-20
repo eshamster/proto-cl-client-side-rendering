@@ -25,6 +25,7 @@
                :cl-markup
                :cl-ppcre
                :jonathan
+               :opticl
                :parenscript
                :ps-experiment
                :proto-cl-client-side-rendering/main)

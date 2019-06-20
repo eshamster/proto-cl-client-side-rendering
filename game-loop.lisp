@@ -30,6 +30,8 @@
                 :send-frame-end)
   (:import-from :proto-cl-client-side-rendering/screen-size
                 :update-screen-size)
+  (:import-from :proto-cl-client-side-rendering/texture
+                :update-texture)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :send-from-server
                 :*target-client-id-list*)
@@ -71,6 +73,7 @@
                               (when *stop-game-loop-p*
                                 (return))
                               (update-client-list)
+                              (update-texture)
                               (incf-frame-count)
                               (update-camera-info)
                               (update-input)
