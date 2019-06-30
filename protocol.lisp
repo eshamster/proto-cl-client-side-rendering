@@ -183,9 +183,9 @@
 ;; image ;;
 
 (defun send-load-texture (frame index-in-frame
-                          &key path texture-id)
+                          &key path alpha-path texture-id)
   (send-message :load-texture frame index-in-frame
-                `(:path ,path :texture-id ,texture-id)))
+                `(:path ,path :alpha-path ,alpha-path :texture-id ,texture-id)))
 
 (defun send-load-image (frame index-in-frame
                         &key texture-id image-id uv-x uv-y uv-width uv-height)

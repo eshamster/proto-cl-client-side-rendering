@@ -28,7 +28,8 @@
 
 (defstruct.ps+ texture-info
   id
-  bitmap-image)
+  bitmap-image
+  alpha-bitmap-image)
 
 (defstruct.ps+ image-info
   id
@@ -59,8 +60,9 @@
 (defun.ps+ interpret-texture-message (kind-code command)
   (ecase (code-to-name kind-code)
     (:load-texture
-     (with-command-data (path texture-id) command
-       (load-texture :path path :id texture-id)))
+     (with-command-data (path alpha-path texture-id) command
+       (load-texture :path path :id texture-id
+                     :alpha-path alpha-path)))
     (:load-image
      (with-command-data (image-id texture-id uv-x uv-y uv-width uv-height)
          command
@@ -101,17 +103,33 @@
 
 ;; --- internal --- ;;
 
-(defun.ps load-texture (&key path id)
-  (let ((loader (new (#j.THREE.TextureLoader#))))
-    (loader.load path
-                 (lambda (bitmap-image)
-                   (console.log (+ path " has been loaded"))
+(defun.ps load-texture (&key path alpha-path id)
+  (let* ((loader (new (#j.THREE.TextureLoader#)))
+         (image-promise
+          (make-texture-load-promise loader path))
+         (alpha-image-promise
+          (make-texture-load-promise loader alpha-path)))
+    (chain -promise
+           (all (list image-promise alpha-image-promise))
+           (then (lambda (images)
                    (push (make-texture-info
                           :id id
-                          :bitmap-image bitmap-image)
-                         *texture-info-buffer*))
-                 (lambda (err)
-                   (console.log err)))))
+                          :bitmap-image (aref images 0)
+                          :alpha-bitmap-image (aref images 1))
+                         *texture-info-buffer*))))))
+
+(defun.ps make-texture-load-promise (loader path)
+  (new (-promise
+        (lambda (resolve reject)
+          (if path
+              (loader.load path
+                           (lambda (bitmap-image)
+                             (console.log (+ path " has been loaded"))
+                             (funcall resolve bitmap-image))
+                           (lambda (err)
+                             (console.log err)
+                             (funcall reject err)))
+              (funcall resolve nil))))))
 
 (defun.ps+ image-loaded-p (image-id)
   (find-tex-info-by-image-id image-id))
@@ -154,11 +172,12 @@
     geometry))
 
 (defun.ps make-image-material (&key tex-info color)
-  (new (#j.THREE.MeshBasicMaterial#
-        (create map (texture-info-bitmap-image tex-info)
-                ;; TODO: alpha-map alpha-bitmap
-                ;; TODO: transparent (if alpha-bitmap true false)
-                color color))))
+  (let ((alpha-bitmap (texture-info-alpha-bitmap-image tex-info)))
+    (new (#j.THREE.MeshBasicMaterial#
+          (create map (texture-info-bitmap-image tex-info)
+                  alpha-map alpha-bitmap
+                  transparent (if alpha-bitmap true false)
+                  color color)))))
 
 (defun.ps+ get-data (command target)
   (gethash target (gethash :data command)))

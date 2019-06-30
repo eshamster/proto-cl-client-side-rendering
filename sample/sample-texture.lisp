@@ -13,11 +13,14 @@
 
 (defun start-texture ()
   (load-image :path "sample.png"
+              ;; :alpha-path "sample_alpha.png"
               :name :sample)
   (load-image :path "multiple_image.png"
+              :alpha-path "multiple_image_alpha.png"
               :name :a
               :uv (make-image-uv :width 0.5))
   (load-image :path "multiple_image.png"
+              :alpha-path "multiple_image_alpha.png"
               :name :b
               :uv (make-image-uv :x 0.5 :width 0.5))
   (start-game-loop :update-func (lambda () (update))))
