@@ -52,6 +52,7 @@
            :set-screen-size
            ;; texture
            :make-image-uv
+           :load-texture
            :load-image
            :get-image-size
            ;; utils

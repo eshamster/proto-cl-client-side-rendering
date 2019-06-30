@@ -2,6 +2,7 @@
   (:use :cl)
   (:export :update-texture
            :make-image-uv
+           :load-texture
            :load-image
            :get-image-size
            :get-image-id
@@ -17,7 +18,6 @@
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :*target-client-id-list*)
   (:import-from :alexandria
-                :ensure-gethash
                 :maphash-values)
   (:import-from :opticl
                 :read-png-file
@@ -32,8 +32,8 @@
 (defvar *image-root-path* nil)
 (defvar *image-relative-path* nil)
 
-(defvar *texture-table* (make-hash-table :test 'equal)
-  "Key: A relative path from image root; Value: texture-info")
+(defvar *texture-table* (make-hash-table)
+  "Key: A name represented as a keyword; Value: texture-info")
 (defvar *image-table* (make-hash-table)
   "Key: A name represented as a keyword; value: image-info")
 
@@ -68,19 +68,25 @@
                           (process-load-image img-info))
                         *image-table*)))))
 
-(defun load-image (&key path alpha-path name (uv (make-image-uv)))
-  "Load a image.
-A texture identifed by path can be used for multiple images that have different UVs.
-A path is a relative one from image root.
-A name is represented as a keyword."
-  (check-type path string)
+(defun load-texture (&key name path alpha-path)
+  "Load a texture.
+A name is represented as a keyword.
+A path and alpha-path are relative ones from image root."
   (check-type name keyword)
-  (let* ((tex-info (ensure-gethash path *texture-table*
-                                   (init-texture-info path alpha-path)))
+  (setf (gethash name *texture-table*)
+        (init-texture-info path alpha-path)))
+
+(defun load-image (&key texture-name image-name (uv (make-image-uv)))
+  "Load a image.
+A texture-name and image-name are represented as keywords.
+The texture-name should has been loaded by \"load-texture\".
+A texture identifed by texture-name can be used for multiple images that have different UVs."
+  (check-type image-name keyword)
+  (let* ((tex-info (get-texture-info-by-name texture-name))
          (img-info (make-image-info
                       :texture-id (texture-info-id tex-info)
                       :uv uv)))
-    (setf (gethash name *image-table*) img-info)
+    (setf (gethash image-name *image-table*) img-info)
     (process-load-image img-info)))
 
 (defun get-image-size (name)
@@ -130,6 +136,12 @@ A name is represented as a keyword."
                                      :width width :height height)))
       (process-load-texture result)
       result)))
+
+(defun get-texture-info-by-name (texture-name)
+  (let ((result (gethash texture-name *texture-table*)))
+    (unless result
+      (error "The texture \"~A\" has not been loaded." texture-name))
+    result))
 
 ;; Note: Only for PNG
 (defun read-image-size (path)
