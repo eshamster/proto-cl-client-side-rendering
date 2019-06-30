@@ -14,6 +14,8 @@
                 :get-screen-size)
   (:import-from :proto-cl-client-side-rendering/client/socket
                 :register-socket-on-message)
+  (:import-from :proto-cl-client-side-rendering/client/texture
+                :update-texture)
   (:import-from :parenscript
                 :chain
                 :new
@@ -60,6 +62,7 @@
     (labels ((render-loop ()
                (request-animation-frame render-loop)
                (renderer.render scene (get-camera))
+               (update-texture)
                (funcall update-function scene)))
       (render-loop))))
 

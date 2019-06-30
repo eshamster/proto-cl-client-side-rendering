@@ -84,7 +84,7 @@
   (let ((target-name (code-to-name code)))
     (some (lambda (name)
             (eq name target-name))
-          '(:delete-draw-object :draw-rect :draw-circle :draw-line :draw-arc))))
+          '(:delete-draw-object :draw-rect :draw-circle :draw-line :draw-arc :draw-image))))
 
 (defun.ps+ bool-to-number (bool)
   (if bool 1 0))
@@ -194,9 +194,9 @@
                   :uv-x ,uv-x :uv-y ,uv-y :uv-width ,uv-width :uv-height ,uv-height)))
 
 (defun send-draw-image (frame index-in-frame
-                        &key id texture-id x y depth color width height rotate)
+                        &key id image-id x y depth color width height rotate)
   (send-draw-message :draw-image frame index-in-frame
-                     `(:texture-id texture-id :width ,width :height ,height :rotate ,rotate)
+                     `(:image-id ,image-id :width ,width :height ,height :rotate ,rotate)
                      :id id
                      :x x :y y :depth depth :color color))
 

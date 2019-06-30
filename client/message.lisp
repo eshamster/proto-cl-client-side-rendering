@@ -20,6 +20,10 @@
   (:import-from :proto-cl-client-side-rendering/client/renderer
                 :get-screen-size
                 :set-screen-size)
+  (:import-from :proto-cl-client-side-rendering/client/texture
+                :interpret-texture-message
+                :texture-message-p
+                :make-image-mesh)
   (:import-from :parenscript
                 :chain
                 :new
@@ -90,6 +94,8 @@
               (incf count))
             (cond ((draw-code-p kind-code)
                    (push-draw-command-to-buffer parsed))
+                  ((texture-message-p kind-code)
+                   (interpret-texture-message kind-code parsed))
                   (t (ecase (code-to-name kind-code)
                        ((:frame-start :frame-end) t)
                        (:log-console (interpret-log-console parsed))
@@ -169,7 +175,12 @@
                   (make-arc :start-angle (gethash :start-angle data)
                             :sweep-angle (gethash :sweep-angle data)
                             :r (gethash :r data)
-                            :color (gethash :color data))))))
+                            :color (gethash :color data)))
+                 (:draw-image
+                  (make-image-mesh :image-id (gethash :image-id data)
+                                   :width (gethash :width data)
+                                   :height (gethash :height data)
+                                   :color (gethash :color data))))))
     (update-common-mesh-params mesh data)
     mesh))
 

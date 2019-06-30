@@ -1,11 +1,11 @@
 (defpackage proto-cl-client-side-rendering/texture
   (:use :cl)
   (:export :update-texture
-           :set-image-root-path
            :make-image-uv
            :load-image
            :get-image-size
-           :get-image-id)
+           :get-image-id
+           :set-image-path)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :get-new-client-id-list)
   (:import-from :proto-cl-client-side-rendering/frame-counter
@@ -30,6 +30,7 @@
 (defvar *image-id* 0)
 
 (defvar *image-root-path* nil)
+(defvar *image-relative-path* nil)
 
 (defvar *texture-table* (make-hash-table :test 'equal)
   "Key: A relative path from image root; Value: texture-info")
@@ -95,8 +96,10 @@ A name is represented as a keyword."
 (defun get-image-id (name)
   (image-info-id (gethash name *image-table*)))
 
-(defun set-image-root-path (path)
-  (setf *image-root-path* path))
+(defun set-image-path (resource-root-path relative-path)
+  (setf *image-root-path*
+        (merge-pathnames relative-path resource-root-path))
+  (setf *image-relative-path* relative-path))
 
 ;; TODO: Functions to remove textures and images
 
@@ -136,7 +139,9 @@ A name is represented as a keyword."
 
 (defun process-load-texture (tex-info)
   (send-load-texture (get-frame-count) (incf-index-in-frame)
-                     :path (texture-info-path tex-info)
+                     :path (namestring
+                            (merge-pathnames (texture-info-path tex-info)
+                                             *image-relative-path*))
                      :texture-id (texture-info-id tex-info)))
 
 (defun process-load-image (img-info)

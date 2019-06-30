@@ -160,8 +160,8 @@
 
 (defun draw-image (&key id image-name x y depth color width height rotate)
   "The image-name should be registered by proto-cl-client-side-rendering:load-image"
-  (let ((texture-id (get-image-id image-name)))
+  (let ((image-id (get-image-id image-name)))
     (setf (gethash id *draw-info-table*)
           (make-draw-info :sender #'send-draw-image
                           :param-table (init-table-by-params
-                                        id texture-id x y depth color width height rotate)))))
+                                        id image-id x y depth color width height rotate)))))

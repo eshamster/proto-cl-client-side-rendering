@@ -6,7 +6,7 @@
   (:import-from :proto-cl-client-side-rendering/client/core
                 :output-client-js)
   (:import-from :proto-cl-client-side-rendering/texture
-                :set-image-root-path)
+                :set-image-path)
   (:import-from :proto-cl-client-side-rendering/utils
                 :ensure-js-files))
 (in-package :proto-cl-client-side-rendering/middleware)
@@ -15,7 +15,7 @@
                                                 resource-root
                                                 (image-relarive-path "img/"))
   (ensure-js-files  (merge-pathnames "js/" resource-root))
-  (set-image-root-path (merge-pathnames image-relarive-path resource-root))
+  (set-image-path resource-root image-relarive-path)
   (lambda (app)
     (lambda (env)
       (output-client-js (merge-pathnames "js/client.js" resource-root))
