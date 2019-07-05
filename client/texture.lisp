@@ -99,7 +99,6 @@
     ;; same width, height, and monochromatic. Then, rewrites by the image
     ;; after loading it.
     (unless (image-loaded-p image-id)
-      (console.log "test not loaded")
       (let ((result-mesh (new (#j.THREE.Mesh#
                                (make-image-geometry :width width
                                                     :height height)
@@ -115,7 +114,6 @@
         (return-from make-image-mesh
           result-mesh)))
     ;; The case where the image has been loaded.
-    (console.log "test loaded")
     (multiple-value-bind (geometry material)
         (make-geometry-and-material)
       (new (#j.THREE.Mesh# geometry material)))))
