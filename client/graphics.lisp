@@ -17,9 +17,6 @@
            :get-mesh-width
            :get-mesh-height
            :get-mesh-size)
-  (:import-from :proto-cl-client-side-rendering/client/texture
-                :image-loaded-p
-                :make-image-mesh)
   (:import-from :alexandria
                 :with-gensyms)
   (:import-from :parenscript

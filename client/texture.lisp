@@ -5,7 +5,6 @@
   (:export :update-texture
            :texture-message-p
            :interpret-texture-message
-           :image-loaded-p
            :make-image-mesh)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name)
