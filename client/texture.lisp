@@ -9,7 +9,9 @@
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name)
   (:import-from :alexandria
-                :make-keyword))
+                :make-keyword)
+  (:import-from :cl-ps-ecs
+                :register-func-with-pred))
 (in-package :proto-cl-client-side-rendering/client/texture)
 
 (enable-ps-experiment-syntax)
@@ -80,25 +82,43 @@
 ;; - for drawer - ;;
 
 (defun.ps make-image-mesh (&key image-id width height color)
-  (unless (image-loaded-p image-id)
-    (return-from make-image-mesh
-      (new (#j.THREE.Mesh#
-            (make-image-geometry :width width
-                                 :height height)
-            (new (#j.THREE.MeshBasicMaterial#
-                  (create :color #x888888)))))))
-  (let ((img-info (find-image-info-by-image-id image-id))
-        (tex-info (find-tex-info-by-image-id image-id)))
-    (with-slots (uv-x uv-y uv-width uv-height) img-info
-      (new (#j.THREE.Mesh#
-            (make-image-geometry :width width
-                                 :height height
-                                 :uv-x uv-x
-                                 :uv-y uv-y
-                                 :uv-width uv-width
-                                 :uv-height uv-height)
-            (make-image-material :tex-info tex-info
-                                 :color color))))))
+  (flet ((make-geometry-and-material ()
+           (let ((img-info (find-image-info-by-image-id image-id))
+                 (tex-info (find-tex-info-by-image-id image-id)))
+             (values
+              (with-slots (uv-x uv-y uv-width uv-height) img-info
+                (make-image-geometry :width width
+                                     :height height
+                                     :uv-x uv-x
+                                     :uv-y uv-y
+                                     :uv-width uv-width
+                                     :uv-height uv-height))
+              (make-image-material :tex-info tex-info
+                                   :color color)))))
+    ;; If the image has not been loaded, returns a temoral mesh with
+    ;; same width, height, and monochromatic. Then, rewrites by the image
+    ;; after loading it.
+    (unless (image-loaded-p image-id)
+      (console.log "test not loaded")
+      (let ((result-mesh (new (#j.THREE.Mesh#
+                               (make-image-geometry :width width
+                                                    :height height)
+                               (new (#j.THREE.MeshBasicMaterial#
+                                     (create :color #x888888)))))))
+        (register-func-with-pred
+         (lambda ()
+           (multiple-value-bind (geometry material)
+               (make-geometry-and-material)
+             (setf result-mesh.geometry geometry
+                   result-mesh.material material)))
+         (lambda () (image-loaded-p image-id)))
+        (return-from make-image-mesh
+          result-mesh)))
+    ;; The case where the image has been loaded.
+    (console.log "test loaded")
+    (multiple-value-bind (geometry material)
+        (make-geometry-and-material)
+      (new (#j.THREE.Mesh# geometry material)))))
 
 ;; --- internal --- ;;
 

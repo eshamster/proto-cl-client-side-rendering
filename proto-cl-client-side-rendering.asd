@@ -28,6 +28,7 @@
                :opticl
                :parenscript
                :ps-experiment
+               :cl-ps-ecs
                :proto-cl-client-side-rendering/main)
   :description "A sample of Client side rendering in Common Lisp"
   :long-description

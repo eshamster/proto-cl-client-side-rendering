@@ -206,6 +206,8 @@
              (not (eq-params :fill-p :color :r)))
             (:draw-rect
              (not (eq-params :fill-p :color :width :height)))
+            (:draw-image
+             (not (eq-params :width :height :color :image-id)))
             (t t))))))
 
 (defun.ps+ add-or-update-mesh (scene command)

@@ -16,6 +16,8 @@
                 :register-socket-on-message)
   (:import-from :proto-cl-client-side-rendering/client/texture
                 :update-texture)
+  (:import-from :cl-ps-ecs
+                :ecs-main)
   (:import-from :parenscript
                 :chain
                 :new
@@ -63,6 +65,7 @@
                (request-animation-frame render-loop)
                (renderer.render scene (get-camera))
                (update-texture)
+               (ecs-main)
                (funcall update-function scene)))
       (render-loop))))
 
