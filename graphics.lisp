@@ -5,6 +5,7 @@
            :draw-circle
            :draw-line
            :draw-arc
+           :draw-image
            :skip-drawing-in-this-frame)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :get-new-client-id-list)
@@ -16,7 +17,10 @@
                 :send-draw-rect
                 :send-draw-circle
                 :send-draw-line
-                :send-draw-arc)
+                :send-draw-arc
+                :send-draw-image)
+  (:import-from :proto-cl-client-side-rendering/texture
+                :get-image-id)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :*target-client-id-list*)
   (:import-from :alexandria
@@ -153,3 +157,11 @@
         (make-draw-info :sender #'send-draw-arc
                         :param-table (init-table-by-params
                                       id x y depth color start-angle sweep-angle r))))
+
+(defun draw-image (&key id image-name x y depth color width height rotate)
+  "The image-name should be registered by proto-cl-client-side-rendering:load-image"
+  (let ((image-id (get-image-id image-name)))
+    (setf (gethash id *draw-info-table*)
+          (make-draw-info :sender #'send-draw-image
+                          :param-table (init-table-by-params
+                                        id image-id x y depth color width height rotate)))))
