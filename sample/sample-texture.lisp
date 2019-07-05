@@ -45,10 +45,6 @@
 (defun update ()
   (incf *temp-counter*)
   (let ((id 0))
-    (draw-circle :id (incf id)
-                 :x 200 :y (+ 300 (* 100 (sin (/ *temp-counter* 2))))
-                 :depth 0
-                 :r 40 :color #xff0000)
     (draw-image :id (incf id)
                 :image-name :sample
                 :x 400 :y 300
