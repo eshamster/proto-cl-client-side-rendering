@@ -38,7 +38,7 @@
   "Key: A name represented as a keyword; value: image-info")
 
 (defstruct texture-info
-  (id (incf *texture-id*))
+  id
   path
   alpha-path
   width
@@ -74,7 +74,7 @@ A name is represented as a keyword.
 A path and alpha-path are relative ones from image root."
   (check-type name keyword)
   (setf (gethash name *texture-table*)
-        (init-texture-info path alpha-path)))
+        (init-texture-info (make-texture-id name) path alpha-path)))
 
 (defun load-image (&key texture-name image-name (uv (make-image-uv)))
   "Load a image.
@@ -127,11 +127,12 @@ A texture identifed by texture-name can be used for multiple images that have di
    *texture-table*)
   (error "The id ~D is not inclueded in the texture info table." id))
 
-(defun init-texture-info (relative-path relative-alpha-path)
+(defun init-texture-info (id relative-path relative-alpha-path)
   (assert *image-root-path*)
   (multiple-value-bind (width height)
       (read-image-size (merge-pathnames relative-path *image-root-path*))
-    (let ((result (make-texture-info :path relative-path
+    (let ((result (make-texture-info :id id
+                                     :path relative-path
                                      :alpha-path relative-alpha-path
                                      :width width :height height)))
       (process-load-texture result)
@@ -148,6 +149,12 @@ A texture identifed by texture-name can be used for multiple images that have di
   (let ((img (read-png-file path)))
     (with-image-bounds (width height) img
       (values width height))))
+
+(defun make-texture-id (name)
+  (let ((info (gethash name *texture-table*)))
+    (if info
+        (texture-info-id info)
+        (incf *texture-id*))))
 
 ;; - sender - ;;
 
