@@ -34,7 +34,7 @@
   (funcall lack.middleware.static:*lack-middleware-static*
            app
            :path (lambda (path)
-                   (if (ppcre:scan (format nil "^(?:/js/|/~A)" image-relarive-path)
+                   (if (ppcre:scan (format nil "^(?:/js/|/json/|/~A)" image-relarive-path)
                                    path)
                         path
                         nil))

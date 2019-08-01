@@ -15,7 +15,10 @@
            :send-load-texture
            :send-load-image
            :send-draw-image
+           :send-load-font
            :draw-code-p
+           :texture-code-p
+           :font-code-p
            :bool-to-number
            :number-to-bool)
   (:import-from :proto-cl-client-side-rendering/ws-server
@@ -49,6 +52,7 @@
                   (20 :load-texture)
                   (21 :load-image)
                   (22 :draw-image)
+                  (25 :load-font)
                   (51 :set-screen-size)
                   (55 :set-camera)
                   (101 :log-console)
@@ -85,6 +89,18 @@
     (some (lambda (name)
             (eq name target-name))
           '(:delete-draw-object :draw-rect :draw-circle :draw-line :draw-arc :draw-image))))
+
+(defun.ps+ texture-code-p (code)
+  (let ((target-name (code-to-name code)))
+    (some (lambda (name)
+            (eq name target-name))
+          '(:load-texture :load-image))))
+
+(defun.ps+ font-code-p (code)
+  (let ((target-name (code-to-name code)))
+    (some (lambda (name)
+            (eq name target-name))
+          '(:load-font))))
 
 (defun.ps+ bool-to-number (bool)
   (if bool 1 0))
@@ -199,6 +215,13 @@
                      `(:image-id ,image-id :width ,width :height ,height :rotate ,rotate)
                      :id id
                      :x x :y y :depth depth :color color))
+
+;; text ;;
+
+(defun send-load-font (frame index-in-frame
+                       &key texture-id font-id font-json-path)
+  (send-message :load-font frame index-in-frame
+                `(:texture-id ,texture-id :font-id ,font-id :font-json-path ,font-json-path)))
 
 ;; - screen size - ;;
 

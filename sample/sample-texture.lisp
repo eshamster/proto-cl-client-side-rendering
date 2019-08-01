@@ -9,7 +9,8 @@
                 :draw-image
                 :load-texture
                 :load-image
-                :make-image-uv))
+                :make-image-uv
+                :load-font))
 (in-package :sample-proto-cl-client-side-rendering/sample-texture)
 
 (defun start-texture ()
@@ -33,7 +34,14 @@
   (load-image :image-name :b
               :texture-name :multiple-image
               :uv (make-image-uv :x 0.5 :width 0.5))
-  (start-game-loop :update-func (lambda () (update))))
+  (start-game-loop :update-func (lambda () (update)))
+
+  (load-texture :name :sample-font
+                :path "font.png"
+                :alpha-path "font_alpha.png")
+  (load-font :name :sample-font
+             :texture-name :sample-font
+             :json-path "font.json"))
 
 (defun stop-texture ()
   (stop-game-loop))

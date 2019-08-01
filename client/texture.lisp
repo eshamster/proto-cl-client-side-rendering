@@ -3,11 +3,12 @@
         :parenscript
         :ps-experiment)
   (:export :update-texture
-           :texture-message-p
            :interpret-texture-message
            :make-image-mesh)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name)
+  (:import-from :proto-cl-client-side-rendering/client/utils
+                :with-command-data)
   (:import-from :alexandria
                 :make-keyword)
   (:import-from :cl-ps-ecs
@@ -15,15 +16,6 @@
 (in-package :proto-cl-client-side-rendering/client/texture)
 
 (enable-ps-experiment-syntax)
-
-;; --- macro --- ;;
-
-(defmacro.ps+ with-command-data ((&rest target-list) command &body body)
-  `(let (,@(mapcar (lambda (target)
-                     `(,target (get-data ,command ,(make-keyword target))))
-                   target-list))
-     ,@body))
-
 
 ;; --- data --- ;;
 
@@ -73,11 +65,6 @@
                        :uv-y uv-y
                        :uv-width uv-width
                        :uv-height uv-height)))))
-
-(defun.ps+ texture-message-p (kind-code)
-  (case (code-to-name kind-code)
-    ((:load-texture :load-image) t)
-    (t nil)))
 
 ;; - for drawer - ;;
 
@@ -195,9 +182,6 @@
                   alpha-map alpha-bitmap
                   transparent (if alpha-bitmap true false)
                   color color)))))
-
-(defun.ps+ get-data (command target)
-  (gethash target (gethash :data command)))
 
 (defun.ps+ find-image-info-by-image-id (image-id)
   (gethash image-id *image-info-table*))
