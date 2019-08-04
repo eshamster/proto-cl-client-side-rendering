@@ -80,8 +80,8 @@
                 :rotate (* 1/10 *temp-counter*)
                 :depth 0 :color #xffffff)
     (draw-text :id (incf id)
-               :text "Press z key"
+               :text "Press z/Z key"
                :font-name :sample-font
                :x 50 :y 50
-               :width 160 :height 60
+               :width 300 :height 60
                :depth 0 :color #xffffff)))

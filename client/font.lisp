@@ -39,7 +39,8 @@
 (defstruct.ps+ char-uv-info
     x y
     width height
-    origin-x origin-y)
+    origin-x origin-y
+    advance)
 
 (defstruct.ps+ font-info
   id
@@ -138,7 +139,8 @@
                              :width (/ info.width tex-width)
                              :height uv-height
                              :origin-x (/ info.origin-x tex-width)
-                             :origin-y uv-origin-y))))
+                             :origin-y uv-origin-y
+                             :advance (/ info.advance tex-width)))))
                   raw-char-info.characters)
          (push (make-font-info :id id
                                :texture-id texture-id
@@ -180,14 +182,15 @@
             (let ((char-width    (* uv-width    scale-x))
                   (char-origin-x (* uv-origin-x scale-x))
                   (char-height   (* uv-height   scale-y))
-                  (char-origin-y (* uv-origin-y scale-y)))
+                  (char-origin-y (* uv-origin-y scale-y))
+                  (char-advance  (* (char-uv-info-advance char-info) scale-x)))
               (setf vertices
                     (append vertices
                             (make-rect-vertices
                              char-width char-height
                              (+ offset-x char-origin-x)
                              (- (- char-origin-y char-height) bottom))))
-              (incf offset-x (+ char-width char-origin-x))
+              (incf offset-x char-advance)
               (setf face-vertex-uvs
                     (append face-vertex-uvs
                             (make-rect-face-vertex-uvs
@@ -236,9 +239,7 @@
   (let ((total-uv-width 0))
     (dostring (char text)
       (let ((char-info (get-char-info char font-info)))
-        (multiple-value-bind (width origin-x)
-            (get-char-uv-width char-info)
-          (incf total-uv-width (+ width origin-x)))))
+        (incf total-uv-width (char-uv-info-advance char-info))))
     total-uv-width))
 
 (defun.ps+ get-total-uv-height (text font-info)
