@@ -31,6 +31,7 @@
            :draw-line
            :draw-arc
            :draw-image
+           :draw-text
            :skip-drawing-in-this-frame
            ;; input
            :key-down-now-p

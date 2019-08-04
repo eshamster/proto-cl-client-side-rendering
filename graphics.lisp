@@ -6,19 +6,23 @@
            :draw-line
            :draw-arc
            :draw-image
+           :draw-text
            :skip-drawing-in-this-frame)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :get-new-client-id-list)
   (:import-from :proto-cl-client-side-rendering/frame-counter
                 :get-frame-count
                 :incf-index-in-frame)
+  (:import-from :proto-cl-client-side-rendering/font
+                :get-font-id)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :send-delete-draw-object
                 :send-draw-rect
                 :send-draw-circle
                 :send-draw-line
                 :send-draw-arc
-                :send-draw-image)
+                :send-draw-image
+                :send-draw-text)
   (:import-from :proto-cl-client-side-rendering/texture
                 :get-image-id)
   (:import-from :proto-cl-client-side-rendering/ws-server
@@ -165,3 +169,11 @@
           (make-draw-info :sender #'send-draw-image
                           :param-table (init-table-by-params
                                         id image-id x y depth color width height rotate)))))
+
+(defun draw-text (&key id font-name text x y depth color width height)
+  "The font-name should be registered by proto-cl-client-side-rendering:load-font"
+  (let ((font-id (get-font-id font-name)))
+    (setf (gethash id *draw-info-table*)
+          (make-draw-info :sender #'send-draw-text
+                          :param-table (init-table-by-params
+                                        id font-id text x y depth color width height)))))

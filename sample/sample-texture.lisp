@@ -7,6 +7,7 @@
                 :stop-game-loop
                 :draw-circle
                 :draw-image
+                :draw-text
                 :load-texture
                 :load-image
                 :make-image-uv
@@ -34,14 +35,15 @@
   (load-image :image-name :b
               :texture-name :multiple-image
               :uv (make-image-uv :x 0.5 :width 0.5))
-  (start-game-loop :update-func (lambda () (update)))
 
   (load-texture :name :sample-font
                 :path "font.png"
                 :alpha-path "font_alpha.png")
   (load-font :name :sample-font
              :texture-name :sample-font
-             :json-path "font.json"))
+             :json-path "font.json")
+
+  (start-game-loop :update-func (lambda () (update))))
 
 (defun stop-texture ()
   (stop-game-loop))
@@ -76,4 +78,10 @@
                 :x 520 :y 300
                 :width 50 :height 50
                 :rotate (* 1/10 *temp-counter*)
-                :depth 0 :color #xffffff)))
+                :depth 0 :color #xffffff)
+    (draw-text :id (incf id)
+               :text "Press z key"
+               :font-name :sample-font
+               :x 50 :y 50
+               :width 160 :height 60
+               :depth 0 :color #xffffff)))

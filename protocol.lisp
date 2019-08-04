@@ -16,6 +16,7 @@
            :send-load-image
            :send-draw-image
            :send-load-font
+           :send-draw-text
            :draw-code-p
            :texture-code-p
            :font-code-p
@@ -53,6 +54,7 @@
                   (21 :load-image)
                   (22 :draw-image)
                   (25 :load-font)
+                  (26 :draw-text)
                   (51 :set-screen-size)
                   (55 :set-camera)
                   (101 :log-console)
@@ -88,7 +90,8 @@
   (let ((target-name (code-to-name code)))
     (some (lambda (name)
             (eq name target-name))
-          '(:delete-draw-object :draw-rect :draw-circle :draw-line :draw-arc :draw-image))))
+          '(:delete-draw-object :draw-rect :draw-circle :draw-line :draw-arc
+            :draw-image :draw-text))))
 
 (defun.ps+ texture-code-p (code)
   (let ((target-name (code-to-name code)))
@@ -222,6 +225,13 @@
                        &key texture-id font-id font-json-path)
   (send-message :load-font frame index-in-frame
                 `(:texture-id ,texture-id :font-id ,font-id :font-json-path ,font-json-path)))
+
+(defun send-draw-text (frame index-in-frame
+                       &key id x y depth color text font-id width height)
+  (send-draw-message :draw-text frame index-in-frame
+                     `(:text ,text :font-id ,font-id :width ,width :height ,height)
+                     :id id
+                     :x x :y y :depth depth :color color))
 
 ;; - screen size - ;;
 

@@ -4,7 +4,9 @@
         :ps-experiment)
   (:export :update-texture
            :interpret-texture-message
-           :make-image-mesh)
+           :make-image-mesh
+           :make-image-material
+           :texture-loaded-p)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name)
   (:import-from :proto-cl-client-side-rendering/client/utils
@@ -70,8 +72,8 @@
 
 (defun.ps make-image-mesh (&key image-id width height color)
   (flet ((make-geometry-and-material ()
-           (let ((img-info (find-image-info-by-image-id image-id))
-                 (tex-info (find-tex-info-by-image-id image-id)))
+           (let* ((img-info (find-image-info-by-image-id image-id))
+                  (tex-id (image-info-texture-id img-info)))
              (values
               (with-slots (uv-x uv-y uv-width uv-height) img-info
                 (make-image-geometry :width width
@@ -80,7 +82,7 @@
                                      :uv-y uv-y
                                      :uv-width uv-width
                                      :uv-height uv-height))
-              (make-image-material :tex-info tex-info
+              (make-image-material :tex-id tex-id
                                    :color color)))))
     ;; If the image has not been loaded, returns a temoral mesh with
     ;; same width, height, and monochromatic. Then, rewrites by the image
@@ -104,6 +106,18 @@
     (multiple-value-bind (geometry material)
         (make-geometry-and-material)
       (new (#j.THREE.Mesh# geometry material)))))
+
+(defun.ps make-image-material (&key tex-id color)
+  (let* ((tex-info (gethash tex-id *texture-info-table*))
+         (alpha-bitmap (texture-info-alpha-bitmap-image tex-info)))
+    (new (#j.THREE.MeshBasicMaterial#
+          (create map (texture-info-bitmap-image tex-info)
+                  alpha-map alpha-bitmap
+                  transparent (if alpha-bitmap true false)
+                  color color)))))
+
+(defun.ps+ texture-loaded-p (tex-id)
+  (gethash tex-id *texture-info-table*))
 
 ;; --- internal --- ;;
 
@@ -174,14 +188,6 @@
     (geometry.compute-vertex-normals)
     (setf geometry.uvs-need-update t)
     geometry))
-
-(defun.ps make-image-material (&key tex-info color)
-  (let ((alpha-bitmap (texture-info-alpha-bitmap-image tex-info)))
-    (new (#j.THREE.MeshBasicMaterial#
-          (create map (texture-info-bitmap-image tex-info)
-                  alpha-map alpha-bitmap
-                  transparent (if alpha-bitmap true false)
-                  color color)))))
 
 (defun.ps+ find-image-info-by-image-id (image-id)
   (gethash image-id *image-info-table*))

@@ -1,7 +1,8 @@
 (defpackage proto-cl-client-side-rendering/font
   (:use :cl)
   (:export :load-font
-           :update-font)
+           :update-font
+           :get-font-id)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :with-sending-to-new-clients)
   (:import-from :proto-cl-client-side-rendering/frame-counter
@@ -51,10 +52,10 @@ A json-path that is a relative one from image root has information of positions 
 
 ;; TODO: (defun calc-text-width (&key font-name text))
 
-;; ;; --- internal --- ;;
-
 (defun get-font-id (name)
   (font-info-id (gethash name *font-table*)))
+
+;; --- internal --- ;;
 
 (defun init-font-info (&key id texture-id json-path)
   (let ((result (make-font-info :id id
