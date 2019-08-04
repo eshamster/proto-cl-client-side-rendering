@@ -10,7 +10,11 @@
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name)
   (:import-from :proto-cl-client-side-rendering/client/utils
-                :with-command-data)
+                :with-command-data
+                :make-rect-vertices
+                :make-rect-faces
+                :make-rect-face-vertex-uvs
+                :make-dummy-rect-mesh)
   (:import-from :alexandria
                 :make-keyword)
   (:import-from :cl-ps-ecs
@@ -88,11 +92,7 @@
     ;; same width, height, and monochromatic. Then, rewrites by the image
     ;; after loading it.
     (unless (image-loaded-p image-id)
-      (let ((result-mesh (new (#j.THREE.Mesh#
-                               (make-image-geometry :width width
-                                                    :height height)
-                               (new (#j.THREE.MeshBasicMaterial#
-                                     (create :color #x888888)))))))
+      (let ((result-mesh (make-dummy-rect-mesh :width width :height height)))
         (register-func-with-pred
          (lambda ()
            (multiple-value-bind (geometry material)
@@ -167,23 +167,10 @@
 (defun.ps make-image-geometry (&key width height
                                     (uv-x 0) (uv-y 0) (uv-width 1) (uv-height 1))
   (let ((geometry (new (#j.THREE.Geometry#))))
-    (setf geometry.vertices
-          (list (new (#j.THREE.Vector3# 0 0 0))
-                (new (#j.THREE.Vector3# width 0 0))
-                (new (#j.THREE.Vector3# width height 0))
-                (new (#j.THREE.Vector3# 0 height 0))))
-    (setf geometry.faces
-          (list (new (#j.THREE.Face3# 0 1 2))
-                (new (#j.THREE.Face3# 2 3 0))))
-    (let ((uv-x+ (+ uv-x uv-width))
-          (uv-y+ (+ uv-y uv-height)))
-      (setf (aref geometry.face-vertex-uvs 0)
-            (list (list (new (#j.THREE.Vector2# uv-x  uv-y ))
-                        (new (#j.THREE.Vector2# uv-x+ uv-y ))
-                        (new (#j.THREE.Vector2# uv-x+ uv-y+)))
-                  (list (new (#j.THREE.Vector2# uv-x+ uv-y+))
-                        (new (#j.THREE.Vector2# uv-x  uv-y+))
-                        (new (#j.THREE.Vector2# uv-x  uv-y ))))))
+    (setf geometry.vertices (make-rect-vertices width height 0 0)
+          geometry.faces (make-rect-faces 0)
+          (aref geometry.face-vertex-uvs 0) (make-rect-face-vertex-uvs
+                                             uv-x uv-y uv-width uv-height))
     (geometry.compute-face-normals)
     (geometry.compute-vertex-normals)
     (setf geometry.uvs-need-update t)
