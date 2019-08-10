@@ -15,6 +15,8 @@
                 :get-frame-count
                 :reset-frame-count
                 :incf-index-in-frame)
+  (:import-from :proto-cl-client-side-rendering/font
+                :update-font)
   (:import-from :proto-cl-client-side-rendering/graphics
                 :update-graphics)
   (:import-from :proto-cl-client-side-rendering/input
@@ -82,7 +84,8 @@
                                      (send-frame-start (get-frame-count) (incf-index-in-frame))
                                      (update-screen-size)
                                      (funcall update-func)
-                                     (update-graphics))
+                                     (update-graphics)
+                                     (update-font))
                                 (send-frame-end (get-frame-count) (incf-index-in-frame)))))))))
 
 (defun stop-game-loop ()

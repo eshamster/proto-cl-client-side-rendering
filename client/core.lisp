@@ -3,6 +3,8 @@
   (:export :output-client-js)
   (:import-from :proto-cl-client-side-rendering/client/camera
                 :get-camera)
+  (:import-from :proto-cl-client-side-rendering/client/font
+                :update-font)
   (:import-from :proto-cl-client-side-rendering/client/input
                 :init-input)
   (:import-from :proto-cl-client-side-rendering/client/message
@@ -65,6 +67,7 @@
                (request-animation-frame render-loop)
                (renderer.render scene (get-camera))
                (update-texture)
+               (update-font)
                (ecs-main)
                (funcall update-function scene)))
       (render-loop))))

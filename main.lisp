@@ -2,6 +2,7 @@
   (:nicknames :proto-cl-client-side-rendering)
   (:use :cl
         :proto-cl-client-side-rendering/camera
+        :proto-cl-client-side-rendering/font
         :proto-cl-client-side-rendering/game-loop
         :proto-cl-client-side-rendering/graphics
         :proto-cl-client-side-rendering/input
@@ -16,6 +17,10 @@
            :get-camera-scale
            :set-camera-center-pos
            :set-camera-scale
+           ;; font
+           :load-font
+           :calc-text-width
+           :calc-text-height
            ;; game-loop
            :start-game-loop
            :stop-game-loop
@@ -28,6 +33,7 @@
            :draw-line
            :draw-arc
            :draw-image
+           :draw-text
            :skip-drawing-in-this-frame
            ;; input
            :key-down-now-p

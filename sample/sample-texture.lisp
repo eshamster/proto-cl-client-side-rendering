@@ -7,9 +7,12 @@
                 :stop-game-loop
                 :draw-circle
                 :draw-image
+                :draw-text
                 :load-texture
                 :load-image
-                :make-image-uv))
+                :make-image-uv
+                :load-font
+                :calc-text-width))
 (in-package :sample-proto-cl-client-side-rendering/sample-texture)
 
 (defun start-texture ()
@@ -33,6 +36,14 @@
   (load-image :image-name :b
               :texture-name :multiple-image
               :uv (make-image-uv :x 0.5 :width 0.5))
+
+  (load-texture :name :sample-font
+                :path "font.png"
+                :alpha-path "font_alpha.png")
+  (load-font :name :sample-font
+             :texture-name :sample-font
+             :json-path "font.json")
+
   (start-game-loop :update-func (lambda () (update))))
 
 (defun stop-texture ()
@@ -68,4 +79,15 @@
                 :x 520 :y 300
                 :width 50 :height 50
                 :rotate (* 1/10 *temp-counter*)
-                :depth 0 :color #xffffff)))
+                :depth 0 :color #xffffff)
+    (let ((height 60)
+          (text "Press z/Z key"))
+      (draw-text :id (incf id)
+                 :text text
+                 :font-name :sample-font
+                 :x 50 :y 50
+                 :width (calc-text-width :font-name :sample-font
+                                         :text text
+                                         :height height)
+                 :height height
+                 :depth 0 :color #xffffff))))

@@ -3,8 +3,10 @@
   (:export :update-client-list
            :get-new-client-id-list
            :get-deleted-client-id-list
-           :get-client-id-list)
+           :get-client-id-list
+           :with-sending-to-new-clients)
   (:import-from :proto-cl-client-side-rendering/ws-server
+                :*target-client-id-list*
                 :register-callback-on-connecting
                 :register-callback-on-disconnecting))
 (in-package :proto-cl-client-side-rendering/client-list-manager)
@@ -40,6 +42,13 @@
 
 (defun get-client-id-list ()
   *client-list*)
+
+(defmacro with-sending-to-new-clients (() &body body)
+  (let ((new-clients (gensym)))
+    `(let ((,new-clients (get-new-client-id-list)))
+       (when ,new-clients
+         (let ((*target-client-id-list* ,new-clients))
+           ,@body)))))
 
 ;; --- internal --- ;;
 

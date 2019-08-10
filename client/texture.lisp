@@ -3,11 +3,18 @@
         :parenscript
         :ps-experiment)
   (:export :update-texture
-           :texture-message-p
            :interpret-texture-message
-           :make-image-mesh)
+           :make-image-mesh
+           :make-image-material
+           :texture-loaded-p)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name)
+  (:import-from :proto-cl-client-side-rendering/client/utils
+                :with-command-data
+                :make-rect-vertices
+                :make-rect-faces
+                :make-rect-face-vertex-uvs
+                :make-dummy-rect-mesh)
   (:import-from :alexandria
                 :make-keyword)
   (:import-from :cl-ps-ecs
@@ -15,15 +22,6 @@
 (in-package :proto-cl-client-side-rendering/client/texture)
 
 (enable-ps-experiment-syntax)
-
-;; --- macro --- ;;
-
-(defmacro.ps+ with-command-data ((&rest target-list) command &body body)
-  `(let (,@(mapcar (lambda (target)
-                     `(,target (get-data ,command ,(make-keyword target))))
-                   target-list))
-     ,@body))
-
 
 ;; --- data --- ;;
 
@@ -74,17 +72,12 @@
                        :uv-width uv-width
                        :uv-height uv-height)))))
 
-(defun.ps+ texture-message-p (kind-code)
-  (case (code-to-name kind-code)
-    ((:load-texture :load-image) t)
-    (t nil)))
-
 ;; - for drawer - ;;
 
 (defun.ps make-image-mesh (&key image-id width height color)
   (flet ((make-geometry-and-material ()
-           (let ((img-info (find-image-info-by-image-id image-id))
-                 (tex-info (find-tex-info-by-image-id image-id)))
+           (let* ((img-info (find-image-info-by-image-id image-id))
+                  (tex-id (image-info-texture-id img-info)))
              (values
               (with-slots (uv-x uv-y uv-width uv-height) img-info
                 (make-image-geometry :width width
@@ -93,17 +86,13 @@
                                      :uv-y uv-y
                                      :uv-width uv-width
                                      :uv-height uv-height))
-              (make-image-material :tex-info tex-info
+              (make-image-material :tex-id tex-id
                                    :color color)))))
     ;; If the image has not been loaded, returns a temoral mesh with
     ;; same width, height, and monochromatic. Then, rewrites by the image
     ;; after loading it.
     (unless (image-loaded-p image-id)
-      (let ((result-mesh (new (#j.THREE.Mesh#
-                               (make-image-geometry :width width
-                                                    :height height)
-                               (new (#j.THREE.MeshBasicMaterial#
-                                     (create :color #x888888)))))))
+      (let ((result-mesh (make-dummy-rect-mesh :width width :height height)))
         (register-func-with-pred
          (lambda ()
            (multiple-value-bind (geometry material)
@@ -117,6 +106,18 @@
     (multiple-value-bind (geometry material)
         (make-geometry-and-material)
       (new (#j.THREE.Mesh# geometry material)))))
+
+(defun.ps make-image-material (&key tex-id color)
+  (let* ((tex-info (gethash tex-id *texture-info-table*))
+         (alpha-bitmap (texture-info-alpha-bitmap-image tex-info)))
+    (new (#j.THREE.MeshBasicMaterial#
+          (create map (texture-info-bitmap-image tex-info)
+                  alpha-map alpha-bitmap
+                  transparent (if alpha-bitmap true false)
+                  color color)))))
+
+(defun.ps+ texture-loaded-p (tex-id)
+  (gethash tex-id *texture-info-table*))
 
 ;; --- internal --- ;;
 
@@ -166,38 +167,14 @@
 (defun.ps make-image-geometry (&key width height
                                     (uv-x 0) (uv-y 0) (uv-width 1) (uv-height 1))
   (let ((geometry (new (#j.THREE.Geometry#))))
-    (setf geometry.vertices
-          (list (new (#j.THREE.Vector3# 0 0 0))
-                (new (#j.THREE.Vector3# width 0 0))
-                (new (#j.THREE.Vector3# width height 0))
-                (new (#j.THREE.Vector3# 0 height 0))))
-    (setf geometry.faces
-          (list (new (#j.THREE.Face3# 0 1 2))
-                (new (#j.THREE.Face3# 2 3 0))))
-    (let ((uv-x+ (+ uv-x uv-width))
-          (uv-y+ (+ uv-y uv-height)))
-      (setf (aref geometry.face-vertex-uvs 0)
-            (list (list (new (#j.THREE.Vector2# uv-x  uv-y ))
-                        (new (#j.THREE.Vector2# uv-x+ uv-y ))
-                        (new (#j.THREE.Vector2# uv-x+ uv-y+)))
-                  (list (new (#j.THREE.Vector2# uv-x+ uv-y+))
-                        (new (#j.THREE.Vector2# uv-x  uv-y+))
-                        (new (#j.THREE.Vector2# uv-x  uv-y ))))))
+    (setf geometry.vertices (make-rect-vertices width height 0 0)
+          geometry.faces (make-rect-faces 0)
+          (aref geometry.face-vertex-uvs 0) (make-rect-face-vertex-uvs
+                                             uv-x uv-y uv-width uv-height))
     (geometry.compute-face-normals)
     (geometry.compute-vertex-normals)
     (setf geometry.uvs-need-update t)
     geometry))
-
-(defun.ps make-image-material (&key tex-info color)
-  (let ((alpha-bitmap (texture-info-alpha-bitmap-image tex-info)))
-    (new (#j.THREE.MeshBasicMaterial#
-          (create map (texture-info-bitmap-image tex-info)
-                  alpha-map alpha-bitmap
-                  transparent (if alpha-bitmap true false)
-                  color color)))))
-
-(defun.ps+ get-data (command target)
-  (gethash target (gethash :data command)))
 
 (defun.ps+ find-image-info-by-image-id (image-id)
   (gethash image-id *image-info-table*))

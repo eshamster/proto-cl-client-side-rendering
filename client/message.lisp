@@ -12,17 +12,21 @@
                 :make-wired-circle
                 :make-line
                 :make-arc)
+  (:import-from :proto-cl-client-side-rendering/client/font
+                :interpret-font-message
+                :make-text-mesh)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name
                 :name-to-code
                 :draw-code-p
+                :texture-code-p
+                :font-code-p
                 :number-to-bool)
   (:import-from :proto-cl-client-side-rendering/client/renderer
                 :get-screen-size
                 :set-screen-size)
   (:import-from :proto-cl-client-side-rendering/client/texture
                 :interpret-texture-message
-                :texture-message-p
                 :make-image-mesh)
   (:import-from :parenscript
                 :chain
@@ -94,8 +98,10 @@
               (incf count))
             (cond ((draw-code-p kind-code)
                    (push-draw-command-to-buffer parsed))
-                  ((texture-message-p kind-code)
+                  ((texture-code-p kind-code)
                    (interpret-texture-message kind-code parsed))
+                  ((font-code-p kind-code)
+                   (interpret-font-message kind-code parsed))
                   (t (ecase (code-to-name kind-code)
                        ((:frame-start :frame-end) t)
                        (:log-console (interpret-log-console parsed))
@@ -180,7 +186,13 @@
                   (make-image-mesh :image-id (gethash :image-id data)
                                    :width (gethash :width data)
                                    :height (gethash :height data)
-                                   :color (gethash :color data))))))
+                                   :color (gethash :color data)))
+                 (:draw-text
+                  (make-text-mesh :text (gethash :text data)
+                                  :font-id (gethash :font-id data)
+                                  :width (gethash :width data)
+                                  :height (gethash :height data)
+                                  :color (gethash :color data))))))
     (update-common-mesh-params mesh data)
     mesh))
 
@@ -208,6 +220,8 @@
              (not (eq-params :fill-p :color :width :height)))
             (:draw-image
              (not (eq-params :width :height :color :image-id)))
+            (:draw-text
+             (not (eq-params :width :height :color :text :font-id)))
             (t t))))))
 
 (defun.ps+ add-or-update-mesh (scene command)

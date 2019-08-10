@@ -6,9 +6,12 @@
            :load-image
            :get-image-size
            :get-image-id
-           :set-image-path)
+           :get-texture-id
+           :set-image-path
+           :get-image-root-path
+           :get-image-relative-path)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
-                :get-new-client-id-list)
+                :with-sending-to-new-clients)
   (:import-from :proto-cl-client-side-rendering/frame-counter
                 :get-frame-count
                 :incf-index-in-frame)
@@ -58,15 +61,13 @@
 ;; --- interface --- ;;
 
 (defun update-texture ()
-  (let ((new-clients (get-new-client-id-list)))
-    (when new-clients
-      (let ((*target-client-id-list* new-clients))
-        (maphash-values (lambda (tex-info)
-                          (process-load-texture tex-info))
-                        *texture-table*)
-        (maphash-values (lambda (img-info)
-                          (process-load-image img-info))
-                        *image-table*)))))
+  (with-sending-to-new-clients ()
+    (maphash-values (lambda (tex-info)
+                      (process-load-texture tex-info))
+                    *texture-table*)
+    (maphash-values (lambda (img-info)
+                      (process-load-image img-info))
+                    *image-table*)))
 
 (defun load-texture (&key name path alpha-path)
   "Load a texture.
@@ -103,10 +104,19 @@ A texture identifed by texture-name can be used for multiple images that have di
 (defun get-image-id (name)
   (image-info-id (gethash name *image-table*)))
 
+(defun get-texture-id (name)
+  (texture-info-id (gethash name *texture-table*)))
+
 (defun set-image-path (resource-root-path relative-path)
   (setf *image-root-path*
         (merge-pathnames relative-path resource-root-path))
   (setf *image-relative-path* relative-path))
+
+(defun get-image-root-path ()
+  *image-root-path*)
+
+(defun get-image-relative-path ()
+  *image-relative-path*)
 
 ;; TODO: Functions to remove textures and images
 
@@ -163,7 +173,7 @@ A texture identifed by texture-name can be used for multiple images that have di
     (send-load-texture (get-frame-count) (incf-index-in-frame)
                        :path (namestring
                               (merge-pathnames (texture-info-path tex-info)
-                                               *image-relative-path*))
+                                               (get-image-relative-path)))
                        ;; Note: In jonathan:to-json, nil is converted to "[]".
                        ;; But it is not interpreted as false in JavaScript.
                        ;; So use 0 instead of it.
@@ -171,7 +181,7 @@ A texture identifed by texture-name can be used for multiple images that have di
                        :alpha-path (if alpha-path
                                        (namestring
                                         (merge-pathnames alpha-path
-                                                         *image-relative-path*))
+                                                         (get-image-relative-path)))
                                        0)
                        :texture-id (texture-info-id tex-info))))
 
