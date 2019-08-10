@@ -36,8 +36,6 @@
                 :register-func-with-pred))
 (in-package :proto-cl-client-side-rendering/client/font)
 
-;; TODO: Convert not-defined character to a default character
-
 (enable-ps-experiment-syntax)
 
 ;; --- data --- ;;
