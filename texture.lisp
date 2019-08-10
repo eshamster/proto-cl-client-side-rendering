@@ -8,6 +8,7 @@
            :get-image-id
            :get-texture-id
            :set-image-path
+           :get-image-root-path
            :get-image-relative-path)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :with-sending-to-new-clients)
@@ -110,6 +111,9 @@ A texture identifed by texture-name can be used for multiple images that have di
   (setf *image-root-path*
         (merge-pathnames relative-path resource-root-path))
   (setf *image-relative-path* relative-path))
+
+(defun get-image-root-path ()
+  *image-root-path*)
 
 (defun get-image-relative-path ()
   *image-relative-path*)

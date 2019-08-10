@@ -3,11 +3,13 @@
         :parenscript
         :ps-experiment)
   (:export :font-info-common
+           :init-font-info-common
            :dostring
            :get-total-uv-width
            :get-total-uv-height
+           :get-total-width
+           :get-total-height
            :get-char-info
-           :parse-raw-char-info
            :char-uv-info-x
            :char-uv-info-y
            :char-uv-info-width
@@ -42,6 +44,8 @@
 (defstruct.ps+ font-info-common
   id
   texture-id
+  tex-width
+  tex-height
   uv-top
   uv-bottom
   ;; key: char, value: char-uv-info
@@ -49,14 +53,16 @@
 
 ;; --- interface --- ;;
 
-(defun.ps+ parse-raw-char-info (&key id texture-id info-table)
+(defun.ps+ init-font-info-common (&key id texture-id info-table font-info)
+  (check-type font-info font-info-common)
   (let ((tex-width (gethash "width" info-table))
         (tex-height (gethash "height" info-table))
         (char-info-table (make-hash-table))
         (most-uv-top 0)
         (most-uv-bottom 0))
-    (maphash (lambda (char info)
-               (let ((uv-height (/ (gethash "height" info) tex-height))
+    (maphash (lambda (char-string info)
+               (let ((char (char-string-to-char char-string))
+                     (uv-height (/ (gethash "height" info) tex-height))
                      (uv-origin-y (/ (gethash "originY" info) tex-height)))
                  (let ((uv-top uv-origin-y)
                        (uv-bottom (- uv-origin-y uv-height)))
@@ -72,11 +78,14 @@
                         :origin-y uv-origin-y
                         :advance (/ (gethash "advance" info) tex-width)))))
              (gethash "characters" info-table))
-    (make-font-info-common :id id
-                    :texture-id texture-id
-                    :uv-top most-uv-top
-                    :uv-bottom most-uv-bottom
-                    :char-info-table char-info-table)))
+    (setf (font-info-common-id              font-info) id
+          (font-info-common-texture-id      font-info) texture-id
+          (font-info-common-tex-width       font-info) tex-width
+          (font-info-common-tex-height      font-info) tex-height
+          (font-info-common-uv-top          font-info) most-uv-top
+          (font-info-common-uv-bottom       font-info) most-uv-bottom
+          (font-info-common-char-info-table font-info) char-info-table)
+    font-info))
 
 (defun.ps+ get-total-uv-width (text font-info-common)
   (let ((total-uv-width 0))
@@ -90,5 +99,21 @@
   (- (font-info-common-uv-top font-info-common)
      (font-info-common-uv-bottom font-info-common)))
 
+(defun.ps+ get-total-width (text font-info-common)
+  (* (get-total-uv-width text font-info-common)
+     (font-info-common-tex-width font-info-common)))
+
+(defun.ps+ get-total-height (text font-info-common)
+  (* (get-total-uv-height text font-info-common)
+     (font-info-common-tex-height font-info-common)))
+
 (defun.ps+ get-char-info (char font-info-common)
   (gethash char (font-info-common-char-info-table font-info-common)))
+
+;; --- internal --- ;;
+
+(defun.ps-only char-string-to-char (char-string)
+  char-string)
+
+(defun char-string-to-char (char-string)
+  (car (coerce char-string 'list)))

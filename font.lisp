@@ -2,18 +2,24 @@
   (:use :cl)
   (:export :load-font
            :update-font
-           :get-font-id)
+           :get-font-id
+           :calc-text-width
+           :calc-text-height)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :with-sending-to-new-clients)
   (:import-from :proto-cl-client-side-rendering/frame-counter
                 :get-frame-count
                 :incf-index-in-frame)
   (:import-from :proto-cl-client-side-rendering/font-utils
-                :font-info-common)
+                :font-info-common
+                :init-font-info-common
+                :get-total-width
+                :get-total-height)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :send-load-font)
   (:import-from :proto-cl-client-side-rendering/texture
                 :get-image-relative-path
+                :get-image-root-path
                 :get-texture-id)
   (:import-from :alexandria
                 :maphash-values))
@@ -50,7 +56,17 @@ A json-path that is a relative one from image root has information of positions 
 
 ;; TODO: Functions to remove fonts
 
-;; TODO: (defun calc-text-width (&key font-name text))
+(defun calc-text-width (&key font-name text height)
+  (let* ((font-info (gethash font-name *font-table*))
+         (raw-width (get-total-width text font-info))
+         (raw-height (get-total-height text font-info)))
+    (* height (/ raw-width raw-height))))
+
+(defun calc-text-height (&key font-name text width)
+  (let* ((font-info (gethash font-name *font-table*))
+         (raw-width (get-total-width text font-info))
+         (raw-height (get-total-height text font-info)))
+    (* width (/ raw-height raw-width))))
 
 (defun get-font-id (name)
   (font-info-id (gethash name *font-table*)))
@@ -58,9 +74,11 @@ A json-path that is a relative one from image root has information of positions 
 ;; --- internal --- ;;
 
 (defun init-font-info (&key id texture-id json-path)
-  (let ((result (make-font-info :id id
-                                :texture-id texture-id
-                                :json-path json-path)))
+  (let ((result (init-font-info-common
+                 :font-info (make-font-info :json-path json-path)
+                 :id id
+                 :texture-id texture-id
+                 :info-table (parse-char-info-json-to-table json-path))))
     (process-load-font result)
     result))
 
@@ -69,6 +87,13 @@ A json-path that is a relative one from image root has information of positions 
     (if info
         (font-info-id info)
         (incf *font-id*))))
+
+(defun parse-char-info-json-to-table (json-relative-path)
+  (let ((json-full-path (merge-pathnames json-relative-path (get-image-root-path))))
+    (with-open-file (json json-full-path :direction :input)
+      (let ((buf (make-string (file-length json))))
+        (read-sequence buf json)
+        (jonathan:parse buf :as :hash-table)))))
 
 ;; - sender - ;;
 

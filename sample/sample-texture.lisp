@@ -11,7 +11,8 @@
                 :load-texture
                 :load-image
                 :make-image-uv
-                :load-font))
+                :load-font
+                :calc-text-width))
 (in-package :sample-proto-cl-client-side-rendering/sample-texture)
 
 (defun start-texture ()
@@ -79,9 +80,14 @@
                 :width 50 :height 50
                 :rotate (* 1/10 *temp-counter*)
                 :depth 0 :color #xffffff)
-    (draw-text :id (incf id)
-               :text "Press z/Z key"
-               :font-name :sample-font
-               :x 50 :y 50
-               :width 300 :height 60
-               :depth 0 :color #xffffff)))
+    (let ((height 60)
+          (text "Press z/Z key"))
+      (draw-text :id (incf id)
+                 :text text
+                 :font-name :sample-font
+                 :x 50 :y 50
+                 :width (calc-text-width :font-name :sample-font
+                                         :text text
+                                         :height height)
+                 :height height
+                 :depth 0 :color #xffffff))))

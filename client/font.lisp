@@ -11,7 +11,7 @@
                 :get-total-uv-width
                 :get-total-uv-height
                 :get-char-info
-                :parse-raw-char-info
+                :init-font-info-common
                 :char-uv-info-x
                 :char-uv-info-y
                 :char-uv-info-width
@@ -110,9 +110,11 @@
      char-info-path
      (lambda (data)
        (let ((info-table (#j.JSON.parse# data)))
-         (push (parse-raw-char-info :info-table info-table
-                                    :id id
-                                    :texture-id texture-id)
+         (push (init-font-info-common
+                :font-info (make-font-info)
+                :info-table info-table
+                :id id
+                :texture-id texture-id)
                *font-info-buffer*))))))
 
 (defun.ps+ font-loaded-p (font-id)
