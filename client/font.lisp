@@ -133,7 +133,7 @@
          (scale-x (/ width (get-total-uv-width text font-info)))
          (scale-y (/ height (get-total-uv-height text font-info)))
          (bottom (* (font-info-uv-bottom font-info) scale-y)))
-    (dostring (char text)
+    (dostring (char text font-info)
       (let ((char-info (get-char-info char font-info)))
         (multiple-value-bind (uv-width uv-origin-x)
             (get-char-uv-width char-info)

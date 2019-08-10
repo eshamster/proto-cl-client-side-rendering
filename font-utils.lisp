@@ -23,15 +23,16 @@
 
 ;; --- macro --- ;;
 
-(defmacro.ps dostring ((var text) &body body)
+(defmacro.ps dostring ((var text font-info-common) &body body)
   (let ((i (gensym)))
     `(dotimes (,i (@ ,text length))
-       (let ((,var (aref ,text ,i)))
+       (let ((,var (get-valid-char (aref ,text ,i) ,font-info-common)))
          ,@body))))
 
-(defmacro dostring ((var text) &body body)
+(defmacro dostring ((var text font-info-common) &body body)
   `(dolist (,var (coerce ,text 'list))
-     ,@body))
+     (let ((,var (get-valid-char ,var ,font-info-common)))
+       ,@body)))
 
 ;; --- data --- ;;
 
@@ -50,6 +51,10 @@
   uv-bottom
   ;; key: char, value: char-uv-info
   (char-info-table (make-hash-table)))
+
+;; TODO: Setter of *default-char*
+(defvar.ps+ *default-char* #\X
+  "It is used when a specifed character is not inclued a font")
 
 ;; --- interface --- ;;
 
@@ -89,7 +94,7 @@
 
 (defun.ps+ get-total-uv-width (text font-info-common)
   (let ((total-uv-width 0))
-    (dostring (char text)
+    (dostring (char text font-info-common)
       (let ((char-info (get-char-info char font-info-common)))
         (incf total-uv-width (char-uv-info-advance char-info))))
     total-uv-width))
@@ -117,3 +122,10 @@
 
 (defun char-string-to-char (char-string)
   (car (coerce char-string 'list)))
+
+(defun.ps+ get-valid-char (char font-info-common)
+  (let ((char-info (gethash char (font-info-common-char-info-table
+                                  font-info-common))))
+    (if char-info
+        char
+        *default-char*)))
