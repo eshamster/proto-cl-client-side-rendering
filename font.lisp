@@ -101,7 +101,7 @@ A json-path that is a relative one from image root has information of positions 
   (send-load-font (get-frame-count) (incf-index-in-frame)
                   :font-id (font-info-id font-info)
                   :texture-id (font-info-texture-id font-info)
-                  :font-json-path
+                  :font-info-json-path
                   (namestring
                    (merge-pathnames (font-info-json-path font-info)
                                     (get-image-relative-path)))))

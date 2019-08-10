@@ -222,9 +222,9 @@
 ;; text ;;
 
 (defun send-load-font (frame index-in-frame
-                       &key texture-id font-id font-json-path)
+                       &key texture-id font-id font-info-json-path)
   (send-message :load-font frame index-in-frame
-                `(:texture-id ,texture-id :font-id ,font-id :font-json-path ,font-json-path)))
+                `(:texture-id ,texture-id :font-id ,font-id :font-info-json-path ,font-info-json-path)))
 
 (defun send-draw-text (frame index-in-frame
                        &key id x y depth color text font-id width height)

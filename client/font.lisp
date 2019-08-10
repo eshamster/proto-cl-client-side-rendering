@@ -66,11 +66,11 @@
 (defun.ps+ interpret-font-message (kind-code command)
   (ecase (code-to-name kind-code)
     (:load-font
-     (with-command-data (font-id texture-id font-json-path)
+     (with-command-data (font-id texture-id font-info-json-path)
          command
        (load-font :id font-id
                   :texture-id texture-id
-                  :char-info-path font-json-path)))))
+                  :font-info-json-path font-info-json-path)))))
 
 ;; - for drawer - ;;
 
@@ -104,10 +104,10 @@
 
 ;; --- internal --- ;;
 
-(defun.ps load-font (&key id texture-id char-info-path)
+(defun.ps load-font (&key id texture-id font-info-json-path)
   (let* ((loader (new (#j.THREE.FileLoader#))))
     (loader.load
-     char-info-path
+     font-info-json-path
      (lambda (data)
        (let ((info-table (#j.JSON.parse# data)))
          (push (init-font-info-common
