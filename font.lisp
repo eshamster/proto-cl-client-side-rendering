@@ -8,6 +8,8 @@
   (:import-from :proto-cl-client-side-rendering/frame-counter
                 :get-frame-count
                 :incf-index-in-frame)
+  (:import-from :proto-cl-client-side-rendering/font-utils
+                :font-info-common)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :send-load-font)
   (:import-from :proto-cl-client-side-rendering/texture
@@ -24,9 +26,7 @@
 (defvar *font-table* (make-hash-table)
   "Key: A name represented as a keyword; Value: font-info")
 
-(defstruct font-info
-  id
-  texture-id
+(defstruct (font-info (:include font-info-common))
   json-path ; path from image-root-path
   )
 

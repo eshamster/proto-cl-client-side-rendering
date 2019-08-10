@@ -5,6 +5,20 @@
   (:export :update-font
            :interpret-font-message
            :make-text-mesh)
+  (:import-from :proto-cl-client-side-rendering/font-utils
+                :font-info-common
+                :dostring
+                :get-total-uv-width
+                :get-total-uv-height
+                :get-char-info
+                :parse-raw-char-info
+                :char-uv-info-x
+                :char-uv-info-y
+                :char-uv-info-width
+                :char-uv-info-height
+                :char-uv-info-origin-x
+                :char-uv-info-origin-y
+                :char-uv-info-advance)
   (:import-from :proto-cl-client-side-rendering/protocol
                 :code-to-name)
   (:import-from :proto-cl-client-side-rendering/client/texture
@@ -26,33 +40,9 @@
 
 (enable-ps-experiment-syntax)
 
-;; --- macro --- ;;
-
-(defmacro.ps dostring ((var text) &body body)
-  (let ((i (gensym)))
-    `(dotimes (,i (@ ,text length))
-       (let ((,var (aref ,text ,i)))
-         ,@body))))
-
-(defmacro dostring ((var text) &body body)
-  `(dolist (,var (coerce ,text 'list))
-     ,@body))
-
 ;; --- data --- ;;
 
-(defstruct.ps+ char-uv-info
-    x y
-    width height
-    origin-x origin-y
-    advance)
-
-(defstruct.ps+ font-info
-  id
-  texture-id
-  uv-top
-  uv-bottom
-  ;; key: char, value: char-uv-info
-  (char-info-table (make-hash-table)))
+(defstruct.ps+ (font-info (:include font-info-common)))
 
 (defvar.ps+ *font-info-buffer* (list))
 
@@ -119,34 +109,10 @@
     (loader.load
      char-info-path
      (lambda (data)
-       (let* ((raw-char-info (#j.JSON.parse# data))
-              (tex-width raw-char-info.width)
-              (tex-height raw-char-info.height)
-              (char-info-table (make-hash-table))
-              (most-uv-top 0)
-              (most-uv-bottom 0))
-         (maphash (lambda (char info)
-                    (let ((uv-height (/ info.height tex-height))
-                          (uv-origin-y (/ info.origin-y tex-height)))
-                      (let ((uv-top uv-origin-y)
-                            (uv-bottom (- uv-origin-y uv-height)))
-                        (setf most-uv-top (max uv-top most-uv-top))
-                        (setf most-uv-bottom (min uv-bottom most-uv-bottom)))
-                      (setf (gethash char char-info-table)
-                            (make-char-uv-info
-                             :x (/ info.x tex-width)
-                             :y (- 1.0 (/ info.y tex-height) uv-height)
-                             :width (/ info.width tex-width)
-                             :height uv-height
-                             :origin-x (/ info.origin-x tex-width)
-                             :origin-y uv-origin-y
-                             :advance (/ info.advance tex-width)))))
-                  raw-char-info.characters)
-         (push (make-font-info :id id
-                               :texture-id texture-id
-                               :uv-top most-uv-top
-                               :uv-bottom most-uv-bottom
-                               :char-info-table char-info-table)
+       (let ((info-table (#j.JSON.parse# data)))
+         (push (parse-raw-char-info :info-table info-table
+                                    :id id
+                                    :texture-id texture-id)
                *font-info-buffer*))))))
 
 (defun.ps+ font-loaded-p (font-id)
@@ -202,21 +168,6 @@
       (geometry.compute-face-normals)
       (geometry.compute-vertex-normals)
       geometry)))
-
-(defun.ps+ get-total-uv-width (text font-info)
-  (let ((total-uv-width 0))
-    (dostring (char text)
-      (let ((char-info (get-char-info char font-info)))
-        (incf total-uv-width (char-uv-info-advance char-info))))
-    total-uv-width))
-
-(defun.ps+ get-total-uv-height (text font-info)
-  (declare (ignore text))
-  (- (font-info-uv-top font-info)
-     (font-info-uv-bottom font-info)))
-
-(defun.ps+ get-char-info (char font-info)
-  (gethash char (font-info-char-info-table font-info)))
 
 ;; - char info - ;;
 
