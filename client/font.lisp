@@ -146,7 +146,7 @@
                     (append vertices
                             (make-rect-vertices
                              char-width char-height
-                             (+ offset-x char-origin-x)
+                             (- offset-x char-origin-x)
                              (- (- char-origin-y char-height) bottom))))
               (incf offset-x char-advance)
               (setf face-vertex-uvs
