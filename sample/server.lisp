@@ -2,7 +2,11 @@
   (:use :cl
         :cl-markup)
   (:export :start
-           :stop)
+           :stop
+           :get-ningle-app
+           :get-sample-list
+           :get-current-sample-kind
+           :get-port)
   (:import-from :sample-proto-cl-client-side-rendering/sample-basic
                 :start-basic-sample
                 :stop-basic-sample)
@@ -15,12 +19,19 @@
   (:import-from :proto-cl-client-side-rendering
                 :ensure-js-files
                 :make-src-list-for-script-tag
-                :make-client-side-rendering-middleware))
+                :make-client-side-rendering-middleware)
+  (:import-from :alexandria
+                :hash-table-keys))
 (in-package :sample-proto-cl-client-side-rendering/server)
 
 (defvar *server* nil)
 
-(defun start (&key (port 5000) (kind :basic))
+(defvar *port* 5000)
+
+(defun get-port ()
+  *port*)
+
+(defun start (&key (port *port*) (kind :basic))
   (stop)
   (setf *server*
         (clack:clackup
@@ -32,6 +43,7 @@
                             (asdf:find-system :sample-proto-cl-client-side-rendering))))
           *ningle-app*)
          :port port))
+  (setf *port* port)
   (start-sample-game-loop :kind kind))
 
 (defun stop ()
@@ -43,6 +55,9 @@
 ;; --- static --- ;;
 
 (defvar *ningle-app* (make-instance 'ningle:<app>))
+
+(defun get-ningle-app ()
+  *ningle-app*)
 
 (setf (ningle:route *ningle-app* "/" :method :GET)
       (lambda (params)
@@ -66,17 +81,44 @@
 
 (defvar *current-sample-kind* nil)
 
+(defstruct sample-info start-proc stop-proc)
+
+(defvar *sample-info-table* (make-hash-table))
+
+(flet ((set-info (kind info)
+         (setf (gethash kind *sample-info-table*) info)))
+  (set-info :basic
+            (make-sample-info :start-proc #'start-basic-sample
+                              :stop-proc #'stop-basic-sample))
+  (set-info :screen-and-camera
+            (make-sample-info :start-proc #'start-screen-and-camera-sample
+                              :stop-proc #'stop-screen-and-camera-sample))
+  (set-info :texture
+            (make-sample-info :start-proc #'start-texture
+                              :stop-proc #'stop-texture)))
+
+(defun get-sample-list ()
+  (hash-table-keys *sample-info-table*))
+
+(defun get-current-sample-kind ()
+  *current-sample-kind*)
+
+(defun must-get-sample-info (kind)
+  (multiple-value-bind (info found-p)
+      (gethash kind *sample-info-table*)
+    (unless found-p
+      (error "The kind \"~A\" is not valid. Valid kinds are ~A"
+             kind (get-sample-list)))
+    (check-type info sample-info)
+    info))
+
 (defun start-sample-game-loop (&key (kind :basic))
-  (ecase kind
-    (:basic (start-basic-sample))
-    (:screen-and-camera (start-screen-and-camera-sample))
-    (:texture (start-texture)))
+  (funcall (sample-info-start-proc
+            (must-get-sample-info kind)))
   (setf *current-sample-kind* kind))
 
 (defun stop-sample-game-loop ()
   (when *current-sample-kind*
-    (ecase *current-sample-kind*
-      (:basic (stop-basic-sample))
-      (:screen-and-camera (stop-screen-and-camera-sample))
-      (:texture (stop-texture)))
+    (funcall (sample-info-stop-proc
+              (must-get-sample-info *current-sample-kind*)))
     (setf *current-sample-kind* nil)))
