@@ -1,0 +1,21 @@
+language: lisp
+sudo: false
+
+env:
+  global:
+    - PATH=~/.roswell/bin:$PATH
+    - ROSWELL_INSTALL_DIR=$HOME/.roswell
+    - COVERAGE_EXCLUDE=t
+  matrix:
+    - LISP=sbcl-bin COVERALLS=true
+    - LISP=ccl-bin
+
+install:
+  - curl -L https://raw.githubusercontent.com/snmsts/roswell/release/scripts/install-for-ci.sh | sh
+  - ros install eshamster/ps-experiment
+  - ros install eshamster/cl-ps-ecs
+  - ros install fukamachi/rove
+  - ros -e '(ql:register-local-projects)' -q
+
+script:
+  - rove proto-cl-client-side-rendering.asd

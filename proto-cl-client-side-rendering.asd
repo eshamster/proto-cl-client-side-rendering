@@ -34,7 +34,7 @@
   :long-description
   #.(read-file-string
      (subpathname *load-pathname* "README.markdown"))
-  :in-order-to ((test-op (test-op "proto-cl-client-side-rendering-test"))))
+  :in-order-to ((test-op (test-op "proto-cl-client-side-rendering/t"))))
 
 (defsystem proto-cl-client-side-rendering/t
   :class :package-inferred-system
