@@ -48,7 +48,19 @@
                       :expected '(((:a . :down-now) (:b . :down-now))
                                   ((:a . :down)     (:b . :down))
                                   ((:a . :down)     (:b . :up-now))
-                                  ((:a . :down)     (:b . :up))))))
+                                  ((:a . :down)     (:b . :up))))
+                     (make-test-def
+                      :desc "empty input"
+                      :input '(())
+                      :expected '(((:a . :up))))
+                     (make-test-def
+                      :desc "Press and release in same frame"
+                      :input '(((:a . t) (:a . nil))
+                               ((:a . t))
+                               (()))
+                      :expected '(((:a . :down-now))
+                                  ((:a . :down-now))
+                                  ((:a . :up-now))))))
     (testing (test-def-desc def)
       (let ((info (make-key-input-info)))
         (loop

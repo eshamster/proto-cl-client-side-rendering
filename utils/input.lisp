@@ -14,6 +14,7 @@
 
 (defstruct key-input-info
   (down-p-table (make-hash-table))
+  (up-p-table (make-hash-table))
   (count-table (make-hash-table)))
 
 ;; --- interface --- ;;
@@ -21,17 +22,24 @@
 (defun update-key-input-info (info)
   (check-type info key-input-info)
   (let ((count-table (key-input-info-count-table info))
-        (key-down-p-table (key-input-info-down-p-table info)))
+        (down-p-table (key-input-info-down-p-table info))
+        (up-p-table (key-input-info-up-p-table info)))
     (maphash (lambda (key down-p)
-               (setf (gethash key count-table)
-                     (calc-next-input-count
-                      (gethash key count-table 0)
-                      down-p)))
-             key-down-p-table)))
+               (let ((up-p (gethash key up-p-table)))
+                 (multiple-value-bind (next-count next-down-p next-up-p)
+                     (calc-next-input-state
+                      (gethash key count-table 0) down-p up-p)
+                   (setf (gethash key count-table) next-count
+                         (gethash key down-p-table) next-down-p
+                         (gethash key up-p-table) next-up-p))))
+             down-p-table)))
 
 (defun set-raw-key-state (info key down-p)
-  (setf (gethash key (key-input-info-down-p-table info))
-        down-p))
+  (if down-p
+      (setf (gethash key (key-input-info-down-p-table info))
+            t)
+      (setf (gethash key (key-input-info-up-p-table info))
+            t)))
 
 (defmacro def-input-judge (name judge-func)
   `(defun ,name (info key)
@@ -50,10 +58,15 @@
 
 ;; - utils - ;;
 
-(defun calc-next-input-count (current key-down-p)
-  (if key-down-p
-      (if (>= current 0) (1+ current) 1)
-      (if (<= current 0) (1- current) -1)))
+(defun calc-next-input-state (current key-down-p key-up-p)
+  "Return values (next-count next-dow-p next-up-p)"
+  (cond ((and key-down-p key-up-p) (values  1 nil t))
+        (key-down-p                (values  1 nil nil))
+        (key-up-p                  (values -1 nil nil))
+        (t (values (if (> current 0)
+                       (1+ current)
+                       (1- current))
+                   nil nil))))
 
 (defun get-input-state-by-count (raw-count)
   (cond ((= raw-count 1) :down-now)
