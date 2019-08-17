@@ -35,3 +35,10 @@
   #.(read-file-string
      (subpathname *load-pathname* "README.markdown"))
   :in-order-to ((test-op (test-op "proto-cl-client-side-rendering-test"))))
+
+(defsystem proto-cl-client-side-rendering/t
+  :class :package-inferred-system
+  :depends-on (:proto-cl-client-side-rendering
+               :rove
+               "proto-cl-client-side-rendering/t/utils/input")
+  :perform (test-op (o c) (symbol-call :rove '#:run c)))
