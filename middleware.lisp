@@ -7,7 +7,7 @@
                 :output-client-js)
   (:import-from :proto-cl-client-side-rendering/texture
                 :set-image-path)
-  (:import-from :proto-cl-client-side-rendering/utils
+  (:import-from :proto-cl-client-side-rendering/utils/dependency
                 :ensure-js-files))
 (in-package :proto-cl-client-side-rendering/middleware)
 

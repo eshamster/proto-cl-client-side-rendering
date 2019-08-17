@@ -9,7 +9,7 @@
         :proto-cl-client-side-rendering/middleware
         :proto-cl-client-side-rendering/screen-size
         :proto-cl-client-side-rendering/texture
-        :proto-cl-client-side-rendering/utils
+        :proto-cl-client-side-rendering/utils/dependency
         :proto-cl-client-side-rendering/ws-server
         :proto-cl-client-side-rendering/client-list-manager)
   (:export ;; camera
