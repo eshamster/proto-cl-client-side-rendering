@@ -19,6 +19,15 @@
            :touch-summary-up-now-p
            :touch-summary-up-p
            :get-touch-summary-pos)
+  (:import-from :proto-cl-client-side-rendering/utils/input
+                :make-key-input-info
+                :update-key-input-info
+                :input-down-now-p
+                :input-down-p
+                :input-up-now-p
+                :input-up-p
+                :set-raw-key-state
+                :get-input-state)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :get-deleted-client-id-list)
   (:import-from :proto-cl-client-side-rendering/protocol
@@ -38,10 +47,9 @@
           (data (gethash :data message-table)))
       (case kind
         ((:key-down :key-up)
-         (set-raw-key-state client-id
-                            (make-keyword
-                             (string-upcase (gethash :key data)))
-                            (eq kind :key-down)))
+         (set-client-raw-key-state
+          client-id (make-keyword (string-upcase (gethash :key data)))
+          (eq kind :key-down)))
         ((:mouse-down :mouse-up)
          (let ((raw-button (gethash :button data)))
            ;; If raw-button is not string, the button is not implemented yet.
@@ -49,9 +57,8 @@
              (let* ((button (make-keyword (string-upcase raw-button)))
                     (key-name (mouse-button-to-key-name button)))
                (when key-name
-                 (set-raw-key-state client-id
-                                    key-name
-                                    (eq kind :mouse-down))))))
+                 (set-client-raw-key-state
+                  client-id key-name (eq kind :mouse-down))))))
          (update-mouse-pos-buffer
           client-id
           (gethash :x data)
@@ -80,14 +87,7 @@
   ;; keyboard
   (maphash (lambda (id info)
              (declare (ignore id))
-             (let ((count-table (client-input-info-key-count-table info))
-                   (key-down-p-table (client-input-info-key-down-p-table info)))
-               (maphash (lambda (key down-p)
-                          (setf (gethash key count-table)
-                                (calc-next-input-count
-                                 (gethash key count-table 0)
-                                 down-p)))
-                        key-down-p-table)))
+             (update-key-input-info info))
            *client-input-info-table*)
   ;; mouse
   (update-mouse-info)
@@ -97,13 +97,13 @@
 ;; - keyboard - ;;
 
 (defun key-down-now-p (client-id key)
-  (down-now-p (get-key-count client-id key)))
+  (input-down-now-p (get-client-info client-id) key))
 (defun key-down-p (client-id key)
-  (down-p (get-key-count client-id key)))
+  (input-down-p (get-client-info client-id) key))
 (defun key-up-now-p (client-id key)
-  (up-now-p (get-key-count client-id key)))
+  (input-up-now-p (get-client-info client-id) key))
 (defun key-up-p (client-id key)
-  (up-p (get-key-count client-id key)))
+  (input-up-p (get-client-info client-id) key))
 
 ;; - mouse- ;;
 
@@ -168,10 +168,6 @@ If no touches exist, return nil"
 
 ;; - keyboard (and mouse click) - ;;
 
-(defstruct client-input-info
-  (key-down-p-table (make-hash-table))
-  (key-count-table (make-hash-table)))
-
 (defparameter *client-input-info-table* (make-hash-table))
 
 (defun get-client-info (client-id)
@@ -179,16 +175,13 @@ If no touches exist, return nil"
     (if info
         info
         (setf (gethash client-id *client-input-info-table*)
-              (make-client-input-info)))))
+              (make-key-input-info)))))
 
 (defun delete-keyboard-info (client-id)
   (remhash client-id *client-input-info-table*))
 
-(defun set-raw-key-state (client-id key down-p)
-  (setf (gethash key
-                 (client-input-info-key-down-p-table
-                  (get-client-info client-id)))
-        down-p))
+(defun set-client-raw-key-state (client-id key down-p)
+  (set-raw-key-state (get-client-info client-id) key down-p))
 
 (defun get-key-count (client-id key)
   (gethash key
@@ -245,8 +238,7 @@ If no touches exist, return nil"
   (id (incf *latest-touch-id*))
   raw-id
   x y x-buffer y-buffer
-  (down-p t)
-  (count 0))
+  (key-input-info (make-key-input-info)))
 
 (defvar *touch-info-table* (make-hash-table)
   "Key: client id, Value list of touch-info")
@@ -263,16 +255,17 @@ If no touches exist, return nil"
           (ecase kind
             (:touch-start
              ;; FIXME: Should prevent from getting new touch info until next frame.
-             (push (make-touch-info :raw-id raw-id
-                                    :x x :x-buffer x
-                                    :y y :y-buffer y)
-                   info-list))
+             (let ((info (make-touch-info :raw-id raw-id
+                                          :x x :x-buffer x
+                                          :y y :y-buffer y)))
+               (set-raw-key-state (touch-info-key-input-info info) :touch t)
+               (push info info-list)))
             (:touch-end
              (let ((info (get-info)))
                (setf (touch-info-raw-id info) nil
                      (touch-info-x-buffer info) x
-                     (touch-info-y-buffer info) y
-                     (touch-info-down-p info) nil)))
+                     (touch-info-y-buffer info) y)
+               (set-raw-key-state (touch-info-key-input-info info) :touch nil)))
             (:touch-move
              (let ((info (get-info)))
                (setf (touch-info-x-buffer info) x
@@ -282,33 +275,26 @@ If no touches exist, return nil"
 (defun update-touch-info ()
   (maphash (lambda (client-id info-list)
              (dolist (info info-list)
-               (with-slots (x y x-buffer y-buffer
-                              count down-p) info
+               (with-slots (x y x-buffer y-buffer) info
                  (setf x x-buffer
-                       y y-buffer
-                       count (calc-next-input-count count down-p))))
+                       y y-buffer))
+               (update-key-input-info (touch-info-key-input-info info)))
              (setf (gethash client-id *touch-info-table*)
                    (remove-if (lambda (info)
-                                (let ((count (touch-info-count info)))
-                                  (and (not (up-now-p count))
-                                       (up-p count))))
+                                (let ((key-info (touch-info-key-input-info info)))
+                                  (and (not (input-up-now-p key-info :touch))
+                                       (input-up-p key-info :touch))))
                               info-list)))
            *touch-info-table*))
 
 (defun delete-touch-info (client-id)
   (remhash client-id *touch-info-table*))
 
-(defun get-touch-state (client-id touch-id)
-  (let* ((info-list (gethash client-id *touch-info-table* (list)))
-         (info (find touch-id info-list :key #'touch-info-id)))
-    (unless info
-      (return-from get-touch-state :up))
-    (get-input-state (touch-info-count info))))
-
 (defun get-touch-state-summary (client-id)
   (let* ((info-list (gethash client-id *touch-info-table* (list)))
          (state-list (mapcar (lambda (info)
-                               (get-input-state (touch-info-count info)))
+                               (get-input-state
+                                (touch-info-key-input-info info) :touch))
                              info-list)))
     (case (length state-list)
       (0 :up)
@@ -322,35 +308,6 @@ If no touches exist, return nil"
                  (t :up)))))))
 
 ;; - utils - ;;
-
-(defun calc-next-input-count (current key-down-p)
-  (if key-down-p
-      (if (>= current 0) (1+ current) 1)
-      (if (<= current 0) (1- current) -1)))
-
-(defun get-input-state (raw-count)
-  (cond ((= raw-count 1) :down-now)
-        ((> raw-count 1) :down)
-        ((= raw-count -1) :up-now)
-        (t :up)))
-
-(defun down-now-p (raw-count)
-  (let ((state (get-input-state raw-count)))
-    (or (eq state :down-now))))
-(defun down-p (raw-count)
-  (let ((state (get-input-state raw-count)))
-    (or (eq state :down) (eq state :down-now))))
-(defun up-now-p (raw-count)
-  (let ((state (get-input-state raw-count)))
-    (or (eq state :up-now))))
-(defun up-p (raw-count)
-  (let ((state (get-input-state raw-count)))
-    (or (eq state :up) (eq state :up-now))))
-
-(defun get-down-count (raw-count)
-  (if (down-p raw-count) raw-count 0))
-(defun get-up-count (raw-count)
-  (if (up-p raw-count) (* -1 raw-count) 0))
 
 ;; For debug when implementing a new event.
 (defun print-nested-hash-table (table)
