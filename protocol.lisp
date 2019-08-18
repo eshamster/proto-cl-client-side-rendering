@@ -27,6 +27,9 @@
                 :*target-client-id-list*
                 :same-target-client-list-p
                 :copy-target-client-id-list)
+  (:import-from :alexandria
+                :appendf
+                :make-keyword)
   (:import-from :jonathan
                 :to-json)
   (:import-from :ps-experiment
@@ -152,101 +155,101 @@
             (>= (length *message-buffer*) *max-message-buffer*))
     (send-messages-in-buffer)))
 
+(eval-when (:evaluate :compile-toplevel :load-toplevel)
+  (defvar *sender-table* (make-hash-table)
+    "Key: sender name, Value: arg-list")
+
+  (defun map-atom-or-head (list)
+    "Ex. (a b (c :bool) d) -> (a b c d)"
+    (mapcar (lambda (elem)
+              (if (atom elem) elem (car elem)))
+            list))
+
+  (defun map-send-data (data-list)
+    "Ex. (a b (c :bool) d) -> (:a a :b b :c (bool-to-number c) :d d)"
+    (mapcan (lambda (elem)
+              (let* ((wrapped (if (atom elem) (list elem) elem))
+                     (name (car  wrapped))
+                     (type (cadr wrapped)))
+                (list (make-keyword name)
+                      (if type
+                          (ecase type
+                            (:bool `(bool-to-number ,name)))
+                          name))))
+            data-list)))
+
+(defmacro def-sender (name protocol (&key include) &rest data-list)
+  (let ((all-data-list data-list))
+    (when include
+      (multiple-value-bind (included-list found)
+          (gethash include *sender-table*)
+        (unless found
+          (error "The \"~A\" included is not defined." include))
+        (appendf all-data-list included-list)))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (setf (gethash ',name *sender-table*) ',all-data-list)
+       ,(when protocol
+          `(defun ,name (frame index-in-frame
+                         &key ,@(map-atom-or-head all-data-list))
+             (send-message ,protocol frame index-in-frame
+                           (list ,@(map-send-data all-data-list)))))
+       ',name)))
+
 ;; - start and end - ;;
 
-(defun send-frame-start (frame index-in-frame)
-  (send-message :frame-start frame index-in-frame '()))
-
-(defun send-frame-end (frame index-in-frame)
-  (send-message :frame-end frame index-in-frame '()))
+(def-sender send-frame-start :frame-start ())
+(def-sender send-frame-end :frame-end ())
 
 ;; - draw - ;;
 
-(defun send-delete-draw-object (frame index-in-frame &key id)
-  (send-message :delete-draw-object frame index-in-frame
-                `(:id ,id)))
+(def-sender send-draw-message nil ()
+            id x y depth color)
 
-(defun send-draw-message (kind-name frame index-in-frame data
-                          &key id x y depth color)
-  (send-message kind-name frame index-in-frame
-                `(:id ,id :x ,x :y ,y :depth ,depth :color ,color ,@data)))
+(def-sender send-delete-draw-object :delete-draw-object ()
+            id)
 
-(defun send-draw-rect (frame index-in-frame
-                       &key id x y depth color fill-p width height rotate)
-  (send-draw-message :draw-rect frame index-in-frame
-                     `(:fill-p ,(bool-to-number fill-p)
-                       :width ,width :height ,height :rotate ,rotate)
-                     :id id
-                     :x x :y y :depth depth :color color))
+(def-sender send-draw-rect :draw-rect (:include send-draw-message)
+            (fill-p :bool) width height rotate)
 
-(defun send-draw-circle (frame index-in-frame &key id x y depth color fill-p r)
-  (send-draw-message :draw-circle frame index-in-frame
-                     `(:fill-p ,(bool-to-number fill-p) :r ,r)
-                     :id id
-                     :x x :y y :depth depth :color color))
+(def-sender send-draw-circle :draw-circle (:include send-draw-message)
+            (fill-p :bool) r)
 
-(defun send-draw-line (frame index-in-frame
-                       &key id depth color x1 y1 x2 y2)
-  (send-draw-message :draw-line frame index-in-frame
-                     `(:x1 ,x1 :y1 ,y1 :x2 ,x2 :y2 ,y2)
-                     :id id
-                     :x 0 :y 0 :depth depth :color color))
+(def-sender send-draw-line :draw-line (:include send-draw-message)
+            x1 y1 x2 y2)
 
-(defun send-draw-arc (frame index-in-frame
-                      &key id x y depth color start-angle sweep-angle r)
-  (send-draw-message :draw-arc frame index-in-frame
-                     `(:start-angle ,start-angle :sweep-angle ,sweep-angle :r ,r)
-                     :id id
-                     :x x :y y :depth depth :color color))
+(def-sender send-draw-arc :draw-arc (:include send-draw-message)
+            r start-angle sweep-angle)
 
 ;; image ;;
 
-(defun send-load-texture (frame index-in-frame
-                          &key path alpha-path texture-id)
-  (send-message :load-texture frame index-in-frame
-                `(:path ,path :alpha-path ,alpha-path :texture-id ,texture-id)))
+(def-sender send-load-texture :load-texture ()
+            path alpha-path texture-id)
 
-(defun send-load-image (frame index-in-frame
-                        &key texture-id image-id uv-x uv-y uv-width uv-height)
-  (send-message :load-image frame index-in-frame
-                `(:texture-id ,texture-id :image-id ,image-id
-                  :uv-x ,uv-x :uv-y ,uv-y :uv-width ,uv-width :uv-height ,uv-height)))
+(def-sender send-load-image :load-image ()
+            texture-id image-id uv-x uv-y uv-width uv-height)
 
-(defun send-draw-image (frame index-in-frame
-                        &key id image-id x y depth color width height rotate)
-  (send-draw-message :draw-image frame index-in-frame
-                     `(:image-id ,image-id :width ,width :height ,height :rotate ,rotate)
-                     :id id
-                     :x x :y y :depth depth :color color))
+(def-sender send-draw-image :draw-image (:include send-draw-message)
+            image-id width height rotate)
 
 ;; text ;;
 
-(defun send-load-font (frame index-in-frame
-                       &key texture-id font-id font-info-json-path)
-  (send-message :load-font frame index-in-frame
-                `(:texture-id ,texture-id :font-id ,font-id :font-info-json-path ,font-info-json-path)))
+(def-sender send-load-font :load-font ()
+            texture-id font-id font-info-json-path)
 
-(defun send-draw-text (frame index-in-frame
-                       &key id x y depth color text font-id width height)
-  (send-draw-message :draw-text frame index-in-frame
-                     `(:text ,text :font-id ,font-id :width ,width :height ,height)
-                     :id id
-                     :x x :y y :depth depth :color color))
+(def-sender send-draw-text :draw-text (:include send-draw-message)
+            text font-id width height)
 
 ;; - screen size - ;;
 
-(defun send-set-screen-size (frame index-in-frame &key width height)
-  (send-message :set-screen-size frame index-in-frame
-                `(:width ,width :height ,height)))
+(def-sender send-set-screen-size :set-screen-size ()
+            width height)
 
 ;; - camera - ;;
 
-(defun send-set-camera (frame index-in-frame &key center-x center-y scale)
-  (send-message :set-camera frame index-in-frame
-                `(:center-x ,center-x :center-y ,center-y :scale ,scale)))
+(def-sender send-set-camera :set-camera ()
+            center-x center-y scale)
 
 ;; - log - ;;
 
-(defun send-log-console (frame index-in-frame &key message)
-  (send-message :log-console frame index-in-frame
-                `(:message ,message)))
+(def-sender send-log-console :log-console ()
+            message)
