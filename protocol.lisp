@@ -155,7 +155,7 @@
             (>= (length *message-buffer*) *max-message-buffer*))
     (send-messages-in-buffer)))
 
-(eval-when (:evaluate :compile-toplevel :load-toplevel)
+(eval-when (:execute :compile-toplevel :load-toplevel)
   (defvar *sender-table* (make-hash-table)
     "Key: sender name, Value: arg-list")
 
