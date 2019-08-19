@@ -1,10 +1,12 @@
 (defpackage proto-cl-client-side-rendering/client/message
   (:use :cl)
-  (:export :dequeue-draw-commands
+  (:export :dequeue-draw-commands-list
            :interpret-draw-command
            :process-message)
   (:import-from :proto-cl-client-side-rendering/client/camera
                 :set-camera-params)
+  (:import-from :proto-cl-client-side-rendering/client/frame-counter
+                :get-frame-count)
   (:import-from :proto-cl-client-side-rendering/client/graphics
                 :make-solid-rect
                 :make-wired-rect
@@ -28,6 +30,10 @@
   (:import-from :proto-cl-client-side-rendering/client/texture
                 :interpret-texture-message
                 :make-image-mesh)
+  (:import-from :proto-cl-client-side-rendering/utils/buffered-queue
+                :init-buffered-queue
+                :queue-to-buffer
+                :dequeue-list-from-buffer)
   (:import-from :parenscript
                 :chain
                 :new
@@ -46,17 +52,26 @@
 (defvar.ps+ *frame-json-buffer* (list)) ; per frame
 
 (defvar.ps+ *draw-command-buffer* (list)) ; per frame
-(defvar.ps+ *draw-command-queue* (list))  ; frames
+;; frames
+;; TODO: Adjust parameters of init-buffered-queue
+(defvar.ps+ *draw-command-queue* (init-buffered-queue
+                                  :min-count   1
+                                  :start-count 2
+                                  :max-count   4))
 
 (defun.ps push-draw-command-to-buffer (parsed-message)
   (*draw-command-buffer*.push parsed-message))
 
 (defun.ps queue-draw-commands-in-buffer ()
-  (*draw-command-queue*.unshift *draw-command-buffer*)
+  (queue-to-buffer *draw-command-queue* (list *draw-command-buffer*))
   (setf *draw-command-buffer* (list)))
 
-(defun.ps dequeue-draw-commands ()
-  (*draw-command-queue*.pop))
+(defun.ps dequeue-draw-commands-list ()
+  (if (= (mod (get-frame-count)
+              (round (/ *client-fps* *server-fps*)))
+         0)
+      (dequeue-list-from-buffer *draw-command-queue*)
+      (list)))
 
 (defun.ps push-message-to-buffer (parsed-message-list)
   (incf *receive-count-in-frame*)
@@ -66,6 +81,9 @@
       (when (target-kind-p :frame-end message)
         (setf frame-end-p t)))
     frame-end-p))
+
+(defvar.ps+ *client-fps* 60)
+(defvar.ps+ *server-fps* 30) ; set by :set-fps protocol
 
 ;; debug
 (defvar.ps+ *receive-count-in-frame* 0)
@@ -106,7 +124,8 @@
                        ((:frame-start :frame-end) t)
                        (:log-console (interpret-log-console parsed))
                        (:set-screen-size (interpret-set-screen-size parsed))
-                       (:set-camera (interpret-set-camera-params parsed)))))))
+                       (:set-camera (interpret-set-camera-params parsed))
+                       (:set-fps (interpret-set-fps parsed)))))))
         (print-message-stat message-stat))
       (queue-draw-commands-in-buffer)
       (setf *frame-json-buffer* (list)))))
@@ -134,6 +153,9 @@
        :offset-x (- center-x (/ width scale 2))
        :offset-y (- center-y (/ height scale 2))
        :scale scale))))
+
+(defun.ps interpret-set-fps (command)
+  (setf *server-fps* (@ command :data :value)))
 
 ;; TODO: The followings should be moved to another package
 

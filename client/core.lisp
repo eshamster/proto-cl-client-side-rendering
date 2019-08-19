@@ -5,10 +5,12 @@
                 :get-camera)
   (:import-from :proto-cl-client-side-rendering/client/font
                 :update-font)
+  (:import-from :proto-cl-client-side-rendering/client/frame-counter
+                :update-frame-counter)
   (:import-from :proto-cl-client-side-rendering/client/input
                 :init-input)
   (:import-from :proto-cl-client-side-rendering/client/message
-                :dequeue-draw-commands
+                :dequeue-draw-commands-list
                 :interpret-draw-command
                 :process-message)
   (:import-from :proto-cl-client-side-rendering/client/renderer
@@ -66,6 +68,7 @@
     (labels ((render-loop ()
                (request-animation-frame render-loop)
                (renderer.render scene (get-camera))
+               (update-frame-counter)
                (update-texture)
                (update-font)
                (ecs-main)
@@ -77,8 +80,8 @@
      :do (scene.remove (@ scene children 0))))
 
 (defun.ps+ update-draw (scene)
-  (let ((draw-commands (dequeue-draw-commands)))
-    (when draw-commands
+  (let ((draw-commands-list (dequeue-draw-commands-list)))
+    (dolist (draw-commands draw-commands-list)
       (dolist (command draw-commands)
         (interpret-draw-command scene command)))))
 

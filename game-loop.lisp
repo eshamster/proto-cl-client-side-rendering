@@ -9,7 +9,8 @@
                 :update-camera-info)
   (:import-from :proto-cl-client-side-rendering/client-list-manager
                 :update-client-list
-                :get-new-client-id-list)
+                :get-new-client-id-list
+                :with-sending-to-new-clients)
   (:import-from :proto-cl-client-side-rendering/frame-counter
                 :incf-frame-count
                 :get-frame-count
@@ -29,7 +30,8 @@
                 :send-draw-line
                 :send-draw-arc
                 :send-log-console
-                :send-frame-end)
+                :send-frame-end
+                :send-set-fps)
   (:import-from :proto-cl-client-side-rendering/screen-size
                 :update-screen-size)
   (:import-from :proto-cl-client-side-rendering/texture
@@ -49,7 +51,7 @@
 
 (defvar *stop-game-loop-p* nil)
 (defvar *loop-thread* nil)
-(defvar *FPS* 10)
+(defvar *FPS* 15)
 
 ;; --- internal macro --- ;;
 
@@ -82,6 +84,7 @@
                               (unwind-protect
                                    (progn
                                      (send-frame-start (get-frame-count) (incf-index-in-frame))
+                                     (update-fps)
                                      (update-screen-size)
                                      (funcall update-func)
                                      (update-graphics)
@@ -100,7 +103,14 @@
 
 (defun set-fps (fps)
   "Set FPS (frame per second) of game loop."
-  (setf *FPS* fps))
+  (setf *FPS* fps)
+  (send-set-fps (get-frame-count) (incf-index-in-frame)
+                :value fps))
+
+(defun update-fps ()
+  (with-sending-to-new-clients ()
+    (send-set-fps (get-frame-count) (incf-index-in-frame)
+                :value *FPS*)))
 
 ;; --- utils --- ;;
 

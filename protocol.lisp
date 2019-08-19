@@ -11,6 +11,7 @@
            :send-draw-arc
            :send-set-screen-size
            :send-set-camera
+           :send-set-fps
            :send-log-console
            :send-load-texture
            :send-load-image
@@ -60,6 +61,7 @@
                   (26 :draw-text)
                   (51 :set-screen-size)
                   (55 :set-camera)
+                  (61 :set-fps)
                   (101 :log-console)
                   ;; client to server
                   (-1 :key-down)
@@ -248,6 +250,11 @@
 
 (def-sender send-set-camera :set-camera ()
             center-x center-y scale)
+
+;; - FPS - ;;
+
+(def-sender send-set-fps :set-fps ()
+            value)
 
 ;; - log - ;;
 
