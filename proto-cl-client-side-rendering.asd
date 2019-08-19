@@ -40,5 +40,7 @@
   :class :package-inferred-system
   :depends-on (:proto-cl-client-side-rendering
                :rove
+               "ps-experiment/t/test-utils"
+               "proto-cl-client-side-rendering/t/utils/buffered-queue"
                "proto-cl-client-side-rendering/t/utils/input")
   :perform (test-op (o c) (symbol-call :rove '#:run c)))
