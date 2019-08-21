@@ -4,6 +4,7 @@
            :get-new-client-id-list
            :get-deleted-client-id-list
            :get-client-id-list
+           :client-alive-p
            :with-sending-to-new-clients)
   (:import-from :proto-cl-client-side-rendering/ws-server
                 :*target-client-id-list*
@@ -42,6 +43,9 @@
 
 (defun get-client-id-list ()
   *client-list*)
+
+(defun client-alive-p (client-id)
+  (find client-id *client-list*))
 
 (defmacro with-sending-to-new-clients (() &body body)
   (let ((new-clients (gensym)))

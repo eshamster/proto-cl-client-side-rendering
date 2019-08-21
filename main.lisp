@@ -71,4 +71,5 @@
            ;; client-list-manager
            :get-new-client-id-list
            :get-deleted-client-id-list
-           :get-client-id-list))
+           :get-client-id-list
+           :client-alive-p))
