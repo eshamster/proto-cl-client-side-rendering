@@ -250,8 +250,7 @@ If no touches exist, return nil"
             (y (gethash :y data-table))
             (raw-id (gethash :id data-table)))
         (flet ((get-info ()
-                 (find raw-id info-list
-                       :key (lambda (info) (touch-info-raw-id info)))))
+                 (find raw-id info-list :key #'touch-info-raw-id)))
           (ecase kind
             (:touch-start
              ;; FIXME: Should prevent from getting new touch info until next frame.
